@@ -30,7 +30,7 @@ const PlanSelection = () => {
       { icon: Hotel, text: "Hotel Picks" },
     ],
     cta: "Get Detailed Plan",
-    link: "/auth",
+    link: "/paid-itinerary",
   };
 
   return (
