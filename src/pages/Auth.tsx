@@ -25,10 +25,22 @@ const Auth = () => {
     setLoading(true);
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error, data } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast({ title: "Welcome back!" });
-        navigate(redirectTo);
+        
+        // Check if user is admin → redirect to admin dashboard
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .eq("role", "admin");
+        
+        if (roles && roles.length > 0) {
+          navigate("/admin");
+        } else {
+          navigate(redirectTo);
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email,
