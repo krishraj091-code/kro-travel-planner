@@ -200,6 +200,7 @@ export type Database = {
           caption: string | null
           created_at: string
           id: string
+          place_name: string | null
           storage_path: string
           trip_id: string | null
           user_id: string
@@ -208,6 +209,7 @@ export type Database = {
           caption?: string | null
           created_at?: string
           id?: string
+          place_name?: string | null
           storage_path: string
           trip_id?: string | null
           user_id: string
@@ -216,6 +218,7 @@ export type Database = {
           caption?: string | null
           created_at?: string
           id?: string
+          place_name?: string | null
           storage_path?: string
           trip_id?: string | null
           user_id?: string

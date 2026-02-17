@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Camera, Upload, Trash2, Share2, Film, BookOpen, Loader2, X, Plus, Image as ImageIcon } from "lucide-react";
+import { Camera, Upload, Trash2, Share2, BookOpen, Loader2, X, Plus, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -25,6 +25,11 @@ const TripGallery = () => {
   const [shareEmail, setShareEmail] = useState("");
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showAlbum, setShowAlbum] = useState(false);
+
+  // Place-based upload state
+  const [showAddPlace, setShowAddPlace] = useState(false);
+  const [newPlaceName, setNewPlaceName] = useState("");
+  const [activePlaceUpload, setActivePlaceUpload] = useState<string | null>(null);
 
   useEffect(() => {
     init();
@@ -56,9 +61,9 @@ const TripGallery = () => {
     setPhotos(data || []);
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, placeName: string) => {
     const files = e.target.files;
-    if (!files || !user) return;
+    if (!files || !user || !placeName) return;
     setUploading(true);
 
     for (const file of Array.from(files)) {
@@ -75,13 +80,17 @@ const TripGallery = () => {
           trip_id: tripId,
           storage_path: path,
           caption: file.name,
+          place_name: placeName,
         });
       }
     }
 
     await fetchPhotos(user.id);
     setUploading(false);
-    toast({ title: `${files.length} photo(s) uploaded!` });
+    setActivePlaceUpload(null);
+    toast({ title: `${files.length} photo(s) added to "${placeName}"` });
+    // Reset the file input
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const deletePhoto = async (photo: any) => {
@@ -107,6 +116,45 @@ const TripGallery = () => {
     return data.publicUrl;
   };
 
+  // Group photos by place_name
+  const places = photos.reduce<Record<string, any[]>>((acc, photo) => {
+    const place = photo.place_name || "Uncategorized";
+    if (!acc[place]) acc[place] = [];
+    acc[place].push(photo);
+    return acc;
+  }, {});
+
+  const placeNames = Object.keys(places);
+
+  // Get itinerary destinations for suggestions
+  const itineraryPlaces: string[] = [];
+  const itData = trip?.itinerary_data as any;
+  if (itData?.days) {
+    for (const day of itData.days) {
+      if (day.activities) {
+        for (const act of day.activities) {
+          if (act.activity && !itineraryPlaces.includes(act.activity)) {
+            itineraryPlaces.push(act.activity);
+          }
+        }
+      }
+    }
+  }
+
+  const handleAddPlace = () => {
+    if (!newPlaceName.trim()) return;
+    setActivePlaceUpload(newPlaceName.trim());
+    setNewPlaceName("");
+    setShowAddPlace(false);
+    // Trigger file input
+    setTimeout(() => fileInputRef.current?.click(), 100);
+  };
+
+  const triggerUploadForPlace = (placeName: string) => {
+    setActivePlaceUpload(placeName);
+    setTimeout(() => fileInputRef.current?.click(), 100);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -127,17 +175,24 @@ const TripGallery = () => {
               📸 {trip?.destination} Gallery
             </h1>
             <p className="text-muted-foreground">
-              {photos.length} photos · Your private trip memories
+              {photos.length} photos across {placeNames.length} places · Your trip memories
             </p>
           </motion.div>
 
           {/* Action Bar */}
           <div className="flex flex-wrap gap-3 mb-8">
-            <Button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="rounded-full">
-              {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-              {uploading ? "Uploading..." : "Upload Photos"}
+            <Button onClick={() => setShowAddPlace(true)} disabled={uploading} className="rounded-full">
+              {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+              {uploading ? "Uploading..." : "Add Place & Photos"}
             </Button>
-            <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleUpload} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,video/*"
+              className="hidden"
+              onChange={(e) => activePlaceUpload && handleUpload(e, activePlaceUpload)}
+            />
 
             {photos.length >= 5 && (
               <Button variant="outline" className="rounded-full" onClick={() => setShowAlbum(true)}>
@@ -171,51 +226,111 @@ const TripGallery = () => {
             </Dialog>
           </div>
 
-          {/* Photo Grid */}
-          {photos.length === 0 ? (
+          {/* Add Place Dialog */}
+          <Dialog open={showAddPlace} onOpenChange={setShowAddPlace}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-primary" /> Add a Place
+                </DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground mb-3">
+                Name the place you visited (e.g., Cafe, Temple, Market) and then upload photos for it.
+              </p>
+              <Input
+                placeholder="e.g. Hadimba Temple, Mall Road Cafe..."
+                value={newPlaceName}
+                onChange={(e) => setNewPlaceName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddPlace()}
+                className="rounded-xl"
+              />
+              {/* Suggestions from itinerary */}
+              {itineraryPlaces.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs text-muted-foreground mb-2">From your itinerary:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {itineraryPlaces.slice(0, 8).map((place) => (
+                      <button
+                        key={place}
+                        onClick={() => setNewPlaceName(place)}
+                        className="text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors truncate max-w-[200px]"
+                      >
+                        {place}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <Button onClick={handleAddPlace} disabled={!newPlaceName.trim()} className="mt-4 rounded-xl w-full">
+                <Upload className="w-4 h-4 mr-2" /> Select Photos for "{newPlaceName || "..."}"
+              </Button>
+            </DialogContent>
+          </Dialog>
+
+          {/* Place-wise Photo Sections */}
+          {placeNames.length === 0 ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
               <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <h2 className="text-xl font-heading mb-2">No photos yet</h2>
-              <p className="text-muted-foreground mb-6">Upload your trip photos to create albums and reels</p>
-              <Button onClick={() => fileInputRef.current?.click()} className="rounded-full">
-                <Upload className="w-4 h-4 mr-2" /> Upload First Photo
+              <p className="text-muted-foreground mb-6">Add places you visited and upload photos for each</p>
+              <Button onClick={() => setShowAddPlace(true)} className="rounded-full">
+                <Plus className="w-4 h-4 mr-2" /> Add First Place
               </Button>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {photos.map((photo, i) => (
+            <div className="space-y-10">
+              {placeNames.map((placeName) => (
                 <motion.div
-                  key={photo.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="relative group aspect-square rounded-xl overflow-hidden cursor-pointer"
-                  onClick={() => setSelectedPhoto(getPhotoUrl(photo.storage_path))}
+                  key={placeName}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                 >
-                  <img
-                    src={getPhotoUrl(photo.storage_path)}
-                    alt={photo.caption || "Trip photo"}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deletePhoto(photo); }}
-                      className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 text-white hover:bg-destructive"
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-heading flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-primary" />
+                      {placeName}
+                      <span className="text-sm font-normal text-muted-foreground ml-1">
+                        ({places[placeName].length} photos)
+                      </span>
+                    </h2>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      onClick={() => triggerUploadForPlace(placeName)}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add More
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {places[placeName].map((photo: any, i: number) => (
+                      <motion.div
+                        key={photo.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="relative group aspect-square rounded-xl overflow-hidden cursor-pointer"
+                        onClick={() => setSelectedPhoto(getPhotoUrl(photo.storage_path))}
+                      >
+                        <img
+                          src={getPhotoUrl(photo.storage_path)}
+                          alt={photo.caption || "Trip photo"}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deletePhoto(photo); }}
+                            className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 text-white hover:bg-destructive"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
                 </motion.div>
               ))}
-              {/* Upload tile */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
-              >
-                <Plus className="w-8 h-8" />
-                <span className="text-xs">Add More</span>
-              </button>
             </div>
           )}
 

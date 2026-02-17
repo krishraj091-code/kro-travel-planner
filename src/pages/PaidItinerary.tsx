@@ -19,12 +19,19 @@ const fadeUp = {
   viewport: { once: true },
 };
 
-const AFFILIATE_LINKS = {
-  train: "https://www.irctc.co.in",
-  hotel: "https://www.booking.com",
-  bus: "https://www.redbus.in",
-  flight: "https://www.makemytrip.com/flights",
-  cab: "https://www.uber.com",
+// Build dynamic affiliate links with destination/date context
+const buildAffiliateLinks = (destination: string, departure: string, departureDate?: string, arrivalDate?: string) => {
+  const dest = encodeURIComponent(destination || "");
+  const dep = encodeURIComponent(departure || "");
+  const dDate = departureDate ? new Date(departureDate).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "%2F") : "";
+  return {
+    train: `https://www.irctc.co.in/nget/train-search`,
+    hotel: `https://www.booking.com/searchresults.html?ss=${dest}&checkin=${departureDate?.split("T")[0] || ""}&checkout=${arrivalDate?.split("T")[0] || ""}`,
+    bus: `https://www.redbus.in/bus-tickets/${(departure || "").toLowerCase()}-to-${(destination || "").toLowerCase()}`,
+    flight: `https://www.makemytrip.com/flight/search?itinerary=${dep}-${dest}-${departureDate?.split("T")[0]?.replace(/-/g, "/") || ""}&tripType=O&paxType=A-1_C-0_I-0&cabinClass=E`,
+    cab: `https://www.uber.com/in/en/ride/`,
+    maps: `https://www.google.com/maps/search/${dest}`,
+  };
 };
 
 const DayCard = ({ day, dayIndex, dayCost }: { day: any; dayIndex: number; dayCost: number }) => {
@@ -377,6 +384,7 @@ const PaidItinerary = () => {
   if (!itinerary) return null;
 
   const it = itinerary;
+  const LINKS = buildAffiliateLinks(preferences?.arrival, preferences?.departure, preferences?.departureDate, preferences?.arrivalDate);
 
   return (
     <div className="min-h-screen bg-background">
@@ -452,11 +460,12 @@ const PaidItinerary = () => {
             </h2>
             <div className="flex flex-wrap gap-3">
               {[
-                { label: "🚆 Book Train", url: AFFILIATE_LINKS.train, icon: Train },
-                { label: "🏨 Book Hotel", url: AFFILIATE_LINKS.hotel, icon: Hotel },
-                { label: "🚌 Book Bus", url: AFFILIATE_LINKS.bus, icon: Bus },
-                { label: "✈️ Book Flight", url: AFFILIATE_LINKS.flight, icon: Plane },
-                { label: "🚕 Book Cab", url: AFFILIATE_LINKS.cab, icon: Car },
+                { label: "🚆 Book Train", url: LINKS.train, icon: Train },
+                { label: "🏨 Book Hotel", url: LINKS.hotel, icon: Hotel },
+                { label: "🚌 Book Bus", url: LINKS.bus, icon: Bus },
+                { label: "✈️ Book Flight", url: LINKS.flight, icon: Plane },
+                { label: "🚕 Book Cab", url: LINKS.cab, icon: Car },
+                { label: "🗺️ Google Maps", url: LINKS.maps, icon: MapPin },
               ].map((link) => (
                 <a
                   key={link.label}
@@ -536,7 +545,7 @@ const PaidItinerary = () => {
                           <ExternalLink className="w-3 h-3" /> Maps
                         </a>
                       )}
-                      <a href={AFFILIATE_LINKS.hotel} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 ml-auto">
+                      <a href={LINKS.hotel} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 ml-auto">
                         Book Now <ArrowRight className="w-3 h-3" />
                       </a>
                     </div>
@@ -584,7 +593,7 @@ const PaidItinerary = () => {
                   </div>
                 ))}
                 {it.budget_breakdown.emergency_buffer && (
-                  <div className="flex justify-between items-center py-3 border-b border-border text-amber-600">
+                  <div className="flex justify-between items-center py-3 border-b border-border text-accent-foreground">
                     <span>🛡️ Emergency Buffer (10%)</span>
                     <span className="font-semibold">{it.budget_breakdown.emergency_buffer}</span>
                   </div>

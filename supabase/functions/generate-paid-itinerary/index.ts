@@ -64,7 +64,6 @@ function analyzeContext(prefs: any) {
   const budgetMin = parseInt(prefs.budgetMin) || 5000;
   const effectiveBudget = budgetMax;
 
-  // Budget allocation buckets (% of total)
   const transportPercent = 0.30;
   const stayPercent = 0.30;
   const foodPercent = 0.20;
@@ -76,7 +75,7 @@ function analyzeContext(prefs: any) {
   return {
     totalNights,
     totalDays,
-    effectiveTravelDays: Math.max(1, totalDays - 1), // first/last day = travel
+    effectiveTravelDays: Math.max(1, totalDays - 1),
     sightseeingDays: Math.max(1, totalDays - 2),
     numPeople,
     effectiveBudget,
@@ -99,7 +98,6 @@ serve(async (req) => {
 
   const encoder = new TextEncoder();
 
-  // SSE stream for progress updates
   const stream = new ReadableStream({
     async start(controller) {
       const send = (event: string, data: any) => {
@@ -126,19 +124,50 @@ serve(async (req) => {
         send("progress", { step: 2, label: "Analyzing travel context..." });
         const context = analyzeContext(preferences);
 
-        // ── STEP 3: Transport Strategy (AI Call #1) ──
-        send("progress", { step: 3, label: "Finding best transport options..." });
+        const userTransportPref = preferences.transport || "mixed";
+        const userPersona = preferences.persona || "explorer";
+
+        // ── STEP 3: Smart Transport Selection (AI Call #1) ──
+        send("progress", { step: 3, label: "Analyzing transport options smartly..." });
         const transportData = await aiCall(
           LOVABLE_API_KEY,
-          `You are an India transport expert. Return ONLY valid JSON. Analyze transport options between two Indian cities considering budget, time, and comfort. Use realistic 2024-2025 Indian pricing.`,
-          `Compare transport options from ${preferences.departure} to ${preferences.arrival}.
+          `You are an India transport intelligence engine. Return ONLY valid JSON.
+
+CRITICAL RULES FOR TRANSPORT SELECTION:
+1. FIRST analyze: dates, travel time, number of people, budget per person, distance between cities
+2. If user has a transport PREFERENCE ("${userTransportPref}"), CHECK THAT MODE FIRST:
+   - Estimate realistic seat availability for that date
+   - Estimate realistic pricing for ${context.numPeople} people
+   - If it fits within budget (₹${context.budgetAllocation.transport} total round trip) AND is feasible → USE IT
+   - If NOT available or too expensive → EXPLAIN why and suggest best alternative
+3. If user preference is "mixed" or no preference:
+   - Compare ALL modes (train, bus, flight) on: price, travel time, comfort
+   - Pick the best value-for-money option that fits the budget
+4. ALWAYS provide a fallback option if primary choice might not work
+5. Use realistic 2024-2025 Indian pricing and availability patterns
+6. Consider: Tatkal availability, Sleeper vs AC, Volvo vs ordinary bus, budget vs full-service airlines
+
+PERSONA: ${userPersona} (adjust comfort expectations accordingly)`,
+          `Find the BEST transport from ${preferences.departure} to ${preferences.arrival}.
 Dates: ${context.departureDate} to ${context.arrivalDate}
 People: ${context.numPeople} (${context.profile})
-Transport budget: ₹${context.budgetAllocation.transport} total for round trip
-User preference: ${preferences.transport || "mixed"}
+Total transport budget: ₹${context.budgetAllocation.transport} for round trip
+User preference: ${userTransportPref}
+Travel persona: ${userPersona}
+
+STEP 1: Check if "${userTransportPref}" mode is feasible for this route
+STEP 2: Estimate availability and pricing
+STEP 3: If feasible, plan with that mode. If not, find best alternative within budget.
+STEP 4: Always include a backup option.
 
 Return JSON:
 {
+  "analysis": {
+    "distance_km": "string",
+    "preferred_mode_feasible": true/false,
+    "preferred_mode_reason": "string - why feasible or not",
+    "selected_reason": "string - why this mode was finally chosen"
+  },
   "recommended_mode": "train/bus/flight",
   "options": [
     {
@@ -148,22 +177,30 @@ Return JSON:
       "cost_per_person": "string - ₹ amount",
       "total_cost": "string - ₹ amount for all people round trip",
       "comfort": "string - basic/moderate/premium",
-      "feasibility": "string - recommended/possible/expensive",
+      "feasibility": "string - recommended/possible/expensive/unavailable",
+      "availability_note": "string - likely available / waitlist / sold out etc",
       "tips": "string - 1 line practical tip"
     }
   ],
   "selected_outbound": {
     "mode": "string",
-    "details": "string - specific route/train name etc",
+    "details": "string - specific route/train name/bus operator/airline",
     "departure_time": "string",
     "arrival_time": "string",
-    "cost": "string"
+    "cost": "string",
+    "booking_tip": "string"
   },
   "selected_return": {
     "mode": "string",
     "details": "string",
-    "departure_time": "string", 
+    "departure_time": "string",
     "arrival_time": "string",
+    "cost": "string",
+    "booking_tip": "string"
+  },
+  "fallback": {
+    "mode": "string",
+    "reason": "string - when to use this instead",
     "cost": "string"
   },
   "total_transport_cost": "string - ₹ amount"
@@ -190,6 +227,7 @@ Budget for stay: ₹${stayBudget} total (₹${Math.round(stayBudget / context.to
 People: ${context.numPeople}
 Food preference: ${preferences.food || "mixed"}
 Travel type: ${preferences.travelType || "leisure"}
+Persona: ${userPersona}
 
 Return JSON:
 {
@@ -203,7 +241,7 @@ Return JSON:
       "breakfast_included": false,
       "distance_station": "string",
       "distance_hub": "string",
-      "maps_url": "string - Google Maps search URL",
+      "maps_url": "string - Google Maps search URL like https://www.google.com/maps/search/HotelName+City",
       "why_choose": "string - 1 line reason",
       "area": "string - locality name"
     },
@@ -216,7 +254,7 @@ Return JSON:
       "breakfast_included": true,
       "distance_station": "string",
       "distance_hub": "string",
-      "maps_url": "string",
+      "maps_url": "string - Google Maps search URL",
       "why_choose": "string",
       "area": "string"
     },
@@ -229,7 +267,7 @@ Return JSON:
       "breakfast_included": true,
       "distance_station": "string",
       "distance_hub": "string",
-      "maps_url": "string",
+      "maps_url": "string - Google Maps search URL",
       "why_choose": "string",
       "area": "string"
     }
@@ -239,7 +277,7 @@ Return JSON:
 }`
         );
 
-        // ── STEP 6: Full Itinerary Generation (AI Call #3 - Core) ──
+        // ── STEP 6: Full Itinerary Generation (AI Call #3) ──
         send("progress", { step: 6, label: "Building your day-by-day itinerary..." });
         const itineraryData = await aiCall(
           LOVABLE_API_KEY,
@@ -257,6 +295,7 @@ RULES:
 - First day = travel + arrival activities only
 - Last day = checkout + departure activities only
 - Middle days = full sightseeing
+- For EVERY activity with a physical location, include a maps_url as a Google Maps search link
 
 Return ONLY valid JSON.`,
           `Generate itinerary for:
@@ -265,6 +304,7 @@ DATES: ${context.departureDate} to ${context.arrivalDate} (${context.totalDays} 
 PEOPLE: ${context.numPeople} (${context.profile})
 TRAVEL TYPE: ${preferences.travelType || "leisure"}
 FOOD: ${preferences.food || "mixed"}
+PERSONA: ${userPersona}
 SPECIAL NOTES: ${preferences.notes || "None"}
 
 TRANSPORT DETAILS (already finalized):
@@ -301,7 +341,7 @@ Return JSON:
           "note": "string - 1 line note",
           "duration": "string",
           "cost": "string - ₹ amount or Free",
-          "maps_url": "string - optional Google Maps URL"
+          "maps_url": "string - Google Maps search URL like https://www.google.com/maps/search/PlaceName+City (REQUIRED for physical locations)"
         }
       ]
     }
@@ -310,7 +350,7 @@ Return JSON:
 }`
         );
 
-        // ── STEP 7: Add-ons - Restaurants, Tips, Checklist (AI Call #4) ──
+        // ── STEP 7: Add-ons (AI Call #4) ──
         send("progress", { step: 7, label: "Adding restaurants, tips & checklist..." });
         const addonsData = await aiCall(
           LOVABLE_API_KEY,
@@ -328,7 +368,8 @@ Return JSON:
       "meal": "string - Breakfast / Lunch / Dinner",
       "reason": "string - 1 line why",
       "near_landmark": "string",
-      "avg_cost": "string - ₹ per person"
+      "avg_cost": "string - ₹ per person",
+      "maps_url": "string - Google Maps search URL like https://www.google.com/maps/search/RestaurantName+City"
     }
   ],
   "travel_tips": ["array of 6-8 practical tips specific to ${preferences.arrival}"],
@@ -340,11 +381,10 @@ Return JSON:
         // ── STEP 8: Final Assembly ──
         send("progress", { step: 8, label: "Assembling your complete itinerary..." });
 
-        // Build budget breakdown
         const budgetBreakdown = {
           items: [
             { label: "🚆 Transport (Round Trip)", amount: transportData.total_transport_cost || `₹${transportCostNum}` },
-            { label: "🏨 Hotel (${context.totalNights} nights)", amount: hotelData.hotels?.[hotelData.recommended_tier === "Low" ? 0 : hotelData.recommended_tier === "Premium" ? 2 : 1]?.total_cost || `₹${stayBudget}` },
+            { label: `🏨 Hotel (${context.totalNights} nights)`, amount: hotelData.hotels?.[hotelData.recommended_tier === "Low" ? 0 : hotelData.recommended_tier === "Premium" ? 2 : 1]?.total_cost || `₹${stayBudget}` },
             { label: "🍽️ Food & Dining", amount: `₹${foodBudget}` },
             { label: "🎫 Activities & Entry", amount: `₹${activityBudget}` },
             { label: "🚗 Local Transport", amount: `₹${localTravelBudget}` },
@@ -363,11 +403,12 @@ Return JSON:
           food_percent: `${Math.round((foodBudget / context.effectiveBudget) * 100)}%`,
         };
 
-        // Merge everything
         const finalItinerary = {
           ...itineraryData,
           hotels: hotelData.hotels || [],
           transport_options: transportData.options || [],
+          transport_analysis: transportData.analysis || null,
+          transport_fallback: transportData.fallback || null,
           selected_transport: {
             outbound: transportData.selected_outbound,
             return: transportData.selected_return,
