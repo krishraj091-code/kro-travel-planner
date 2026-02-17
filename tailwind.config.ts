@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['"Sora"', 'system-ui', 'sans-serif'],
+        heading: ['"DM Serif Display"', 'Georgia', 'serif'],
         body: ['"Inter"', 'system-ui', 'sans-serif'],
       },
       colors: {
@@ -78,19 +78,11 @@ export default {
         },
         "float": {
           "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-12px)" },
+          "50%": { transform: "translateY(-8px)" },
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 20px hsl(252, 70%, 65%, 0.2)" },
-          "50%": { boxShadow: "0 0 50px hsl(252, 70%, 65%, 0.4)" },
-        },
-        "orbit": {
-          "0%": { transform: "rotate(0deg) translateX(80px) rotate(0deg)" },
-          "100%": { transform: "rotate(360deg) translateX(80px) rotate(-360deg)" },
-        },
-        "shimmer": {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
+          "0%, 100%": { boxShadow: "0 0 15px hsl(18, 52%, 56%, 0.15)" },
+          "50%": { boxShadow: "0 0 35px hsl(18, 52%, 56%, 0.3)" },
         },
       },
       animation: {
@@ -98,8 +90,6 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "float": "float 4s ease-in-out infinite",
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
-        "orbit": "orbit 20s linear infinite",
-        "shimmer": "shimmer 3s linear infinite",
       },
     },
   },

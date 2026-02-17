@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,44 +6,44 @@
 
 @layer base {
   :root {
-    --background: 250 30% 6%;
-    --foreground: 240 10% 95%;
+    --background: 30 20% 97%;
+    --foreground: 20 15% 15%;
 
-    --card: 250 25% 12%;
-    --card-foreground: 240 10% 95%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 15% 15%;
 
-    --popover: 250 25% 10%;
-    --popover-foreground: 240 10% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 15% 15%;
 
-    --primary: 252 70% 65%;
-    --primary-foreground: 250 30% 6%;
+    --primary: 18 52% 56%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 250 30% 18%;
-    --secondary-foreground: 240 10% 90%;
+    --secondary: 30 15% 93%;
+    --secondary-foreground: 20 15% 25%;
 
-    --muted: 250 20% 16%;
-    --muted-foreground: 250 15% 55%;
+    --muted: 30 12% 92%;
+    --muted-foreground: 20 8% 50%;
 
-    --accent: 220 80% 70%;
-    --accent-foreground: 250 30% 6%;
+    --accent: 200 35% 28%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 252 25% 20%;
-    --input: 252 20% 18%;
-    --ring: 252 70% 65%;
+    --border: 30 15% 88%;
+    --input: 30 15% 90%;
+    --ring: 18 52% 56%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 250 25% 10%;
-    --sidebar-foreground: 240 10% 95%;
-    --sidebar-primary: 252 70% 65%;
-    --sidebar-primary-foreground: 250 30% 6%;
-    --sidebar-accent: 250 30% 18%;
-    --sidebar-accent-foreground: 240 10% 90%;
-    --sidebar-border: 252 25% 20%;
-    --sidebar-ring: 252 70% 65%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 20 15% 15%;
+    --sidebar-primary: 18 52% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 15% 95%;
+    --sidebar-accent-foreground: 20 15% 25%;
+    --sidebar-border: 30 15% 88%;
+    --sidebar-ring: 18 52% 56%;
   }
 }
 
@@ -54,11 +54,6 @@
 
   body {
     @apply bg-background text-foreground font-body antialiased;
-    background-image:
-      radial-gradient(ellipse 80% 60% at 50% -20%, hsl(252 70% 65% / 0.12), transparent),
-      radial-gradient(ellipse 60% 50% at 80% 50%, hsl(220 80% 70% / 0.06), transparent),
-      radial-gradient(ellipse 60% 50% at 20% 80%, hsl(270 60% 50% / 0.06), transparent);
-    background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -67,32 +62,33 @@
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-card/40 backdrop-blur-2xl border border-white/[0.08] shadow-xl;
-    box-shadow:
-      0 8px 32px hsl(252 70% 10% / 0.3),
-      inset 0 1px 0 hsl(0 0% 100% / 0.06);
+  .warm-card {
+    @apply bg-card rounded-2xl border border-border/60;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
   }
 
-  .glass-card-hover {
-    @apply glass-card transition-all duration-500;
+  .warm-card-hover {
+    @apply warm-card transition-all duration-300;
   }
-  .glass-card-hover:hover {
-    @apply border-white/[0.15];
-    box-shadow:
-      0 12px 48px hsl(252 70% 65% / 0.15),
-      inset 0 1px 0 hsl(0 0% 100% / 0.1);
-    transform: translateY(-4px);
+  .warm-card-hover:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+
+  /* Legacy aliases for existing components */
+  .glass-card {
+    @apply warm-card;
+  }
+  .glass-card-hover {
+    @apply warm-card-hover;
   }
 
   .gradient-text {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(252, 70%, 65%), hsl(220, 80%, 70%));
+    @apply text-primary;
   }
 
   .gradient-text-warm {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(252, 70%, 65%), hsl(280, 60%, 70%), hsl(220, 80%, 70%));
+    @apply text-primary;
   }
 
   .section-padding {
@@ -100,55 +96,51 @@
   }
 
   .glow-primary {
-    box-shadow: 0 0 40px hsl(252 70% 65% / 0.2), 0 0 80px hsl(252 70% 65% / 0.08);
+    box-shadow: 0 8px 30px hsl(18 52% 56% / 0.12);
   }
 
   .glow-accent {
-    box-shadow: 0 0 40px hsl(220 80% 70% / 0.2), 0 0 80px hsl(220 80% 70% / 0.08);
+    box-shadow: 0 8px 30px hsl(200 35% 28% / 0.1);
   }
 
   .btn-primary {
     @apply relative overflow-hidden rounded-full px-8 py-4 font-semibold text-primary-foreground transition-all duration-300;
-    background: linear-gradient(135deg, hsl(252, 70%, 60%), hsl(252, 70%, 50%));
+    background: hsl(18, 52%, 56%);
   }
   .btn-primary:hover {
-    box-shadow: 0 8px 30px hsl(252 70% 65% / 0.4);
-    transform: translateY(-2px);
+    background: hsl(18, 52%, 48%);
+    box-shadow: 0 6px 24px hsl(18 52% 56% / 0.3);
+    transform: translateY(-1px);
   }
 
+  .btn-outline {
+    @apply rounded-full px-8 py-4 font-semibold border-2 border-foreground/15 text-foreground transition-all duration-300 bg-transparent;
+  }
+  .btn-outline:hover {
+    @apply border-foreground/30;
+    transform: translateY(-1px);
+  }
+
+  /* Legacy alias */
   .btn-outline-glass {
-    @apply rounded-full px-8 py-4 font-semibold border border-white/20 text-foreground backdrop-blur-sm transition-all duration-300;
-    background: hsl(0 0% 100% / 0.04);
-  }
-  .btn-outline-glass:hover {
-    @apply border-white/30;
-    background: hsl(0 0% 100% / 0.08);
-    transform: translateY(-2px);
-  }
-
-  .neumorphic {
-    @apply rounded-2xl;
-    background: hsl(250 25% 12%);
-    box-shadow:
-      6px 6px 16px hsl(250 30% 6% / 0.6),
-      -6px -6px 16px hsl(250 20% 20% / 0.3);
+    @apply btn-outline;
   }
 
   .text-balance {
     text-wrap: balance;
   }
 
+  /* Remove noise overlay for clean aesthetic */
   .noise-overlay {
     position: relative;
   }
-  .noise-overlay::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 1;
+
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
   }
 }
 

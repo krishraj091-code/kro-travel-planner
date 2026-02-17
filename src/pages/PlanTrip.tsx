@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
@@ -12,26 +12,26 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const travelTypes = [
-  { value: "leisure", label: "🏖️ Leisure" },
-  { value: "corporate", label: "💼 Corporate" },
-  { value: "medical", label: "🏥 Medical" },
-  { value: "adventure", label: "🏔️ Adventure" },
-  { value: "religious", label: "🕉️ Religious / Spiritual" },
+  { value: "leisure", label: "Leisure" },
+  { value: "corporate", label: "Corporate" },
+  { value: "medical", label: "Medical" },
+  { value: "adventure", label: "Adventure" },
+  { value: "religious", label: "Spiritual" },
 ];
 
 const transportModes = [
-  { value: "own", label: "🚗 Own Transport" },
-  { value: "public", label: "🚌 Public Transport" },
-  { value: "bus", label: "🚍 Bus" },
-  { value: "train", label: "🚆 Train" },
-  { value: "flight", label: "✈️ Flight" },
-  { value: "mixed", label: "🔄 Mixed" },
+  { value: "own", label: "Own Transport" },
+  { value: "public", label: "Public Transport" },
+  { value: "bus", label: "Bus" },
+  { value: "train", label: "Train" },
+  { value: "flight", label: "Flight" },
+  { value: "mixed", label: "Mixed" },
 ];
 
 const foodPrefs = [
-  { value: "vegetarian", label: "🥗 Vegetarian" },
-  { value: "non-vegetarian", label: "🍖 Non-Vegetarian" },
-  { value: "mixed", label: "🍽️ Mixed" },
+  { value: "vegetarian", label: "Vegetarian" },
+  { value: "non-vegetarian", label: "Non-Vegetarian" },
+  { value: "mixed", label: "Mixed" },
 ];
 
 const PlanTrip = () => {
@@ -55,13 +55,10 @@ const PlanTrip = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     sessionStorage.setItem("tripPreferences", JSON.stringify(form));
-    
-    // Check if user is logged in
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       navigate("/plans");
     } else {
-      // Redirect to auth with a return URL
       navigate("/auth?redirect=/plans");
     }
   };
@@ -71,13 +68,13 @@ const PlanTrip = () => {
       <Navbar />
 
       <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-10"
           >
-            <h1 className="text-3xl sm:text-4xl font-heading font-bold mb-3">Plan Your Perfect Trip</h1>
+            <h1 className="text-3xl sm:text-4xl font-heading mb-3">Where are you going?</h1>
             <p className="text-muted-foreground">Tell us about your trip and we'll craft the perfect plan</p>
           </motion.div>
 
@@ -86,109 +83,84 @@ const PlanTrip = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="glass-card rounded-2xl p-6 sm:p-10 space-y-8"
+            className="warm-card rounded-2xl p-6 sm:p-10 space-y-7"
           >
             {/* Departure / Arrival */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Departure</Label>
-                <Input
-                  placeholder="e.g., New Delhi"
-                  value={form.departure}
-                  onChange={(e) => update("departure", e.target.value)}
-                  required
-                />
+                <Label className="flex items-center gap-2 text-sm font-medium"><MapPin className="w-4 h-4 text-primary" /> Departure</Label>
+                <Input placeholder="e.g., New Delhi" value={form.departure} onChange={(e) => update("departure", e.target.value)} required className="rounded-xl" />
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><MapPin className="w-4 h-4 text-accent" /> Destination</Label>
-                <Input
-                  placeholder="e.g., Manali"
-                  value={form.arrival}
-                  onChange={(e) => update("arrival", e.target.value)}
-                  required
-                />
+                <Label className="flex items-center gap-2 text-sm font-medium"><MapPin className="w-4 h-4 text-accent" /> Destination</Label>
+                <Input placeholder="e.g., Manali" value={form.arrival} onChange={(e) => update("arrival", e.target.value)} required className="rounded-xl" />
               </div>
             </div>
 
             {/* Dates */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> Departure Date & Time</Label>
-                <Input
-                  type="datetime-local"
-                  value={form.departureDate}
-                  onChange={(e) => update("departureDate", e.target.value)}
-                  required
-                />
+                <Label className="flex items-center gap-2 text-sm font-medium"><Calendar className="w-4 h-4 text-primary" /> Departure Date</Label>
+                <Input type="datetime-local" value={form.departureDate} onChange={(e) => update("departureDate", e.target.value)} required className="rounded-xl" />
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Calendar className="w-4 h-4 text-accent" /> Return Date & Time</Label>
-                <Input
-                  type="datetime-local"
-                  value={form.arrivalDate}
-                  onChange={(e) => update("arrivalDate", e.target.value)}
-                  required
-                />
+                <Label className="flex items-center gap-2 text-sm font-medium"><Calendar className="w-4 h-4 text-accent" /> Return Date</Label>
+                <Input type="datetime-local" value={form.arrivalDate} onChange={(e) => update("arrivalDate", e.target.value)} required className="rounded-xl" />
               </div>
             </div>
 
-            {/* People & Budget */}
+            {/* Budget Range */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> People</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={form.numPeople}
-                  onChange={(e) => update("numPeople", e.target.value)}
-                  required
-                />
+                <Label className="flex items-center gap-2 text-sm font-medium"><Users className="w-4 h-4 text-primary" /> People</Label>
+                <Input type="number" min="1" max="20" value={form.numPeople} onChange={(e) => update("numPeople", e.target.value)} required className="rounded-xl" />
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Wallet className="w-4 h-4 text-accent" /> Min Budget (₹)</Label>
-                <Input
-                  type="number"
-                  placeholder="5,000"
-                  value={form.budgetMin}
-                  onChange={(e) => update("budgetMin", e.target.value)}
-                />
+                <Label className="flex items-center gap-2 text-sm font-medium"><Wallet className="w-4 h-4 text-primary" /> Min Budget (₹)</Label>
+                <Input type="number" placeholder="5,000" value={form.budgetMin} onChange={(e) => update("budgetMin", e.target.value)} className="rounded-xl" />
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Wallet className="w-4 h-4 text-accent" /> Max Budget (₹)</Label>
-                <Input
-                  type="number"
-                  placeholder="20,000"
-                  value={form.budgetMax}
-                  onChange={(e) => update("budgetMax", e.target.value)}
-                />
+                <Label className="flex items-center gap-2 text-sm font-medium"><Wallet className="w-4 h-4 text-primary" /> Max Budget (₹)</Label>
+                <Input type="number" placeholder="20,000" value={form.budgetMax} onChange={(e) => update("budgetMax", e.target.value)} className="rounded-xl" />
               </div>
             </div>
 
-            {/* Travel Type, Transport, Food */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Plane className="w-4 h-4 text-primary" /> Travel Type</Label>
-                <Select value={form.travelType} onValueChange={(v) => update("travelType", v)}>
-                  <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                  <SelectContent>
-                    {travelTypes.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+            {/* Travel Vibe */}
+            <div>
+              <Label className="flex items-center gap-2 text-sm font-medium mb-3"><Plane className="w-4 h-4 text-primary" /> Travel Vibe</Label>
+              <div className="flex flex-wrap gap-2">
+                {travelTypes.map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => update("travelType", t.value)}
+                    className={`px-5 py-2.5 rounded-full text-sm font-medium border transition-all duration-200 ${
+                      form.travelType === t.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border text-foreground hover:border-primary/40"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
               </div>
+            </div>
+
+            {/* Transport & Food */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Plane className="w-4 h-4 text-primary" /> Transport</Label>
+                <Label className="flex items-center gap-2 text-sm font-medium"><Plane className="w-4 h-4 text-primary" /> Transport</Label>
                 <Select value={form.transport} onValueChange={(v) => update("transport", v)}>
-                  <SelectTrigger><SelectValue placeholder="Select mode" /></SelectTrigger>
+                  <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select mode" /></SelectTrigger>
                   <SelectContent>
                     {transportModes.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Utensils className="w-4 h-4 text-accent" /> Food</Label>
+                <Label className="flex items-center gap-2 text-sm font-medium"><Utensils className="w-4 h-4 text-primary" /> Food</Label>
                 <Select value={form.food} onValueChange={(v) => update("food", v)}>
-                  <SelectTrigger><SelectValue placeholder="Preference" /></SelectTrigger>
+                  <SelectTrigger className="rounded-xl"><SelectValue placeholder="Preference" /></SelectTrigger>
                   <SelectContent>
                     {foodPrefs.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                   </SelectContent>
@@ -196,19 +168,19 @@ const PlanTrip = () => {
               </div>
             </div>
 
-            {/* Special Notes */}
+            {/* Extra Notes */}
             <div className="space-y-2">
-              <Label className="flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /> Special Requirements</Label>
+              <Label className="flex items-center gap-2 text-sm font-medium"><FileText className="w-4 h-4 text-primary" /> Extra Notes</Label>
               <Textarea
-                placeholder="Traveling with children, elderly, pets, medical conditions, specific comfort needs..."
+                placeholder="Anything important we should know? e.g., children, elderly, pets..."
                 value={form.notes}
                 onChange={(e) => update("notes", e.target.value)}
-                className="min-h-[100px]"
+                className="min-h-[100px] rounded-xl"
               />
             </div>
 
-            <Button type="submit" size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 rounded-xl text-base group">
-              Continue to Plan Selection
+            <Button type="submit" size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 rounded-full text-base group font-semibold">
+              Continue
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </motion.form>
