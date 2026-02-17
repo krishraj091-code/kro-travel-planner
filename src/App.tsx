@@ -12,6 +12,7 @@ import MyTrips from "./pages/MyTrips";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Destinations from "./pages/Destinations";
+import TripGallery from "./pages/TripGallery";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/itinerary/:destination" element={<FreeItinerary />} />
           <Route path="/paid-itinerary" element={<PaidItinerary />} />
           <Route path="/my-trips" element={<MyTrips />} />
+          <Route path="/trip-gallery/:tripId" element={<TripGallery />} />
           <Route path="/destinations" element={<Destinations />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />

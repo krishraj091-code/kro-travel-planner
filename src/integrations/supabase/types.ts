@@ -160,6 +160,76 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_trips: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          shared_with_email: string
+          shared_with_id: string | null
+          trip_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          shared_with_email: string
+          shared_with_id?: string | null
+          trip_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          shared_with_email?: string
+          shared_with_id?: string | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_trips_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "saved_itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          storage_path: string
+          trip_id: string | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          storage_path: string
+          trip_id?: string | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          storage_path?: string
+          trip_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_photos_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "saved_itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_preferences: {
         Row: {
           arrival_datetime: string
@@ -171,10 +241,12 @@ export type Database = {
           departure_place: string
           food_preference: string
           id: string
+          multi_city_stops: Json | null
           num_people: number
           selected_plan: string | null
           special_notes: string | null
           transport_mode: string
+          travel_persona: string | null
           travel_type: string
           updated_at: string
           user_id: string | null
@@ -189,10 +261,12 @@ export type Database = {
           departure_place: string
           food_preference?: string
           id?: string
+          multi_city_stops?: Json | null
           num_people?: number
           selected_plan?: string | null
           special_notes?: string | null
           transport_mode?: string
+          travel_persona?: string | null
           travel_type?: string
           updated_at?: string
           user_id?: string | null
@@ -207,10 +281,12 @@ export type Database = {
           departure_place?: string
           food_preference?: string
           id?: string
+          multi_city_stops?: Json | null
           num_people?: number
           selected_plan?: string | null
           special_notes?: string | null
           transport_mode?: string
+          travel_persona?: string | null
           travel_type?: string
           updated_at?: string
           user_id?: string | null
@@ -231,6 +307,45 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          albums_remaining: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          plan: string
+          reels_remaining: number
+          started_at: string
+          storage_limit_mb: number
+          storage_used_mb: number
+          user_id: string
+        }
+        Insert: {
+          albums_remaining?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          plan?: string
+          reels_remaining?: number
+          started_at?: string
+          storage_limit_mb?: number
+          storage_used_mb?: number
+          user_id: string
+        }
+        Update: {
+          albums_remaining?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          plan?: string
+          reels_remaining?: number
+          started_at?: string
+          storage_limit_mb?: number
+          storage_used_mb?: number
           user_id?: string
         }
         Relationships: []
