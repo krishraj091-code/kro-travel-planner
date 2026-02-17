@@ -177,9 +177,12 @@ const MyTrips = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                       <Button variant="outline" size="sm" className="rounded-full" onClick={() => viewTrip(trip)}>
                         <Eye className="w-4 h-4 mr-1" /> View
+                      </Button>
+                      <Button variant="outline" size="sm" className="rounded-full" onClick={() => navigate(`/trip-gallery/${trip.id}`)}>
+                        📸
                       </Button>
                       <Button
                         variant="outline"

@@ -34,6 +34,15 @@ const foodPrefs = [
   { value: "mixed", label: "Mixed" },
 ];
 
+const travelPersonas = [
+  { value: "budget", label: "💰 Budget", desc: "Smart spending, max value" },
+  { value: "luxury", label: "✨ Luxury", desc: "Premium comfort & dining" },
+  { value: "backpacker", label: "🎒 Backpacker", desc: "Adventure on a shoestring" },
+  { value: "spiritual", label: "🕉️ Spiritual", desc: "Temples, ashrams & peace" },
+  { value: "explorer", label: "🧭 Explorer", desc: "Hidden gems & culture" },
+  { value: "family", label: "👨‍👩‍👧 Family", desc: "Kid-friendly & safe" },
+];
+
 const PlanTrip = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -48,7 +57,10 @@ const PlanTrip = () => {
     transport: "",
     food: "",
     notes: "",
+    persona: "",
+    multiCity: [] as string[],
   });
+  const [cityInput, setCityInput] = useState("");
 
   const update = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }));
 
@@ -166,6 +178,69 @@ const PlanTrip = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* Travel Persona */}
+            <div>
+              <Label className="flex items-center gap-2 text-sm font-medium mb-3">🧭 Travel Persona</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {travelPersonas.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => update("persona", p.value)}
+                    className={`p-3 rounded-xl text-left border transition-all duration-200 ${
+                      form.persona === p.value
+                        ? "bg-primary/10 border-primary text-foreground"
+                        : "bg-card border-border text-foreground hover:border-primary/40"
+                    }`}
+                  >
+                    <div className="text-sm font-medium">{p.label}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{p.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Multi-City Stops */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium">🗺️ Multi-City Stops <span className="text-xs text-muted-foreground">(optional)</span></Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add a stop, e.g., Shimla"
+                  value={cityInput}
+                  onChange={(e) => setCityInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && cityInput.trim()) {
+                      e.preventDefault();
+                      setForm(p => ({ ...p, multiCity: [...p.multiCity, cityInput.trim()] }));
+                      setCityInput("");
+                    }
+                  }}
+                  className="rounded-xl"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-xl"
+                  onClick={() => {
+                    if (cityInput.trim()) {
+                      setForm(p => ({ ...p, multiCity: [...p.multiCity, cityInput.trim()] }));
+                      setCityInput("");
+                    }
+                  }}
+                >+</Button>
+              </div>
+              {form.multiCity.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {form.multiCity.map((city, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
+                      {city}
+                      <button type="button" onClick={() => setForm(p => ({ ...p, multiCity: p.multiCity.filter((_, idx) => idx !== i) }))} className="ml-1 hover:text-destructive">×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Extra Notes */}
