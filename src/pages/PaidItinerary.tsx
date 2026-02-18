@@ -6,7 +6,7 @@ import {
   Lightbulb, ArrowRight, ExternalLink, Loader2, Package, Users,
   CheckCircle2, AlertCircle, Download, RotateCcw, Train, Car, Plane,
   IndianRupee, Camera, ChevronLeft, ChevronRight, Navigation,
-  Image as ImageIcon, X, Zap, Shield
+  Image as ImageIcon, X, Zap, Shield, Sparkles
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { generateItineraryPDF } from "@/lib/generatePDF";
@@ -1160,6 +1160,67 @@ const PaidItinerary = () => {
             <div className="prism-card p-5 sm:p-7 text-center">
               <Star className="w-6 h-6 text-primary mx-auto mb-3" />
               <p className="text-sm sm:text-base leading-relaxed italic" style={{ color: "hsl(158, 30%, 28%)" }}>{it.closing_note}</p>
+            </div>
+          </motion.section>
+        )}
+
+        {/* ─── Trip Tools Strip ─────────────────────────────────────────── */}
+        {savedId && (
+          <motion.section {...fadeUp} className="mb-10 sm:mb-12">
+            <h2 className="text-lg sm:text-xl font-heading mb-4 flex items-center gap-2" style={{ color: "hsl(158, 45%, 12%)" }}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "hsla(158, 42%, 38%, 0.12)" }}>
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
+              Trip Tools
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Trip Wrapped */}
+              <a href={`/trip-wrapped/${savedId}`}
+                className="glass-panel p-4 rounded-2xl flex flex-col gap-2 hover-lift cursor-pointer transition-all group">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-lg">🎉</div>
+                <div>
+                  <p className="font-heading text-xs" style={{ color: "hsl(158,45%,10%)" }}>Trip Wrapped</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">Your trip in a cinematic recap</p>
+                </div>
+                <span className="text-[10px] font-semibold text-primary group-hover:underline">View Wrapped →</span>
+              </a>
+
+              {/* Download PDF */}
+              <button onClick={handleDownloadPDF} disabled={downloading}
+                className="glass-panel p-4 rounded-2xl flex flex-col gap-2 hover-lift cursor-pointer transition-all group text-left">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-lg">📄</div>
+                <div>
+                  <p className="font-heading text-xs" style={{ color: "hsl(158,45%,10%)" }}>Download PDF</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">Save full itinerary offline</p>
+                </div>
+                <span className="text-[10px] font-semibold text-primary group-hover:underline flex items-center gap-1">
+                  {downloading ? <><Loader2 className="w-3 h-3 animate-spin" /> Generating…</> : "Download PDF →"}
+                </span>
+              </button>
+
+              {/* Regenerate */}
+              <button onClick={handleRegenerate} disabled={regenerating}
+                className="glass-panel p-4 rounded-2xl flex flex-col gap-2 hover-lift cursor-pointer transition-all group text-left">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-lg">🔄</div>
+                <div>
+                  <p className="font-heading text-xs" style={{ color: "hsl(158,45%,10%)" }}>Regenerate Plan</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">Get a fresh AI itinerary</p>
+                </div>
+                <span className="text-[10px] font-semibold text-primary group-hover:underline flex items-center gap-1">
+                  {regenerating ? <><Loader2 className="w-3 h-3 animate-spin" /> Regenerating…</> : "Regenerate →"}
+                </span>
+              </button>
+
+              {/* Virtual Album */}
+              <a href={`/trip-gallery/${savedId}`}
+                className="glass-panel p-4 rounded-2xl flex flex-col gap-2 hover-lift cursor-pointer transition-all group">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-lg">📸</div>
+                <div>
+                  <p className="font-heading text-xs" style={{ color: "hsl(158,45%,10%)" }}>Virtual Album</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">Browse & upload trip photos</p>
+                </div>
+                <span className="text-[10px] font-semibold text-primary group-hover:underline">Open Gallery →</span>
+              </a>
             </div>
           </motion.section>
         )}
