@@ -153,6 +153,54 @@ const Admin = () => {
     setLoading(false);
   }, []);
 
+  /* ── realtime live updates ── */
+  const [liveActivity, setLiveActivity] = useState<{ text: string; time: Date }[]>([]);
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const addActivity = (text: string) => {
+      setLiveActivity(prev => [{ text, time: new Date() }, ...prev].slice(0, 20));
+    };
+
+    const channel = supabase
+      .channel("admin-realtime-all")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "profiles" }, (payload) => {
+        addActivity(`🧑 New user signed up${payload.new?.full_name ? `: ${payload.new.full_name}` : ""}`);
+        fetchDashboardStats();
+        fetchUsers();
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "saved_itineraries" }, (payload) => {
+        addActivity(`✈️ New trip planned: ${payload.new?.destination || "Unknown"}`);
+        fetchDashboardStats();
+        fetchItineraries();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "saved_itineraries" }, () => {
+        fetchDashboardStats();
+        fetchItineraries();
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "promo_code_uses" }, (payload) => {
+        addActivity(`🎟️ Promo code used`);
+        fetchPromos();
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "ai_usage_logs" }, (payload) => {
+        addActivity(`🤖 AI used: ${payload.new?.usage_type || "itinerary"} – ${payload.new?.destination || ""}`);
+        fetchDashboardStats();
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "broadcast_notifications" }, () => {
+        fetchBroadcasts();
+      })
+      .subscribe((status) => {
+        setIsLive(status === "SUBSCRIBED");
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+      setIsLive(false);
+    };
+  }, [isAdmin]);
+
   /* ── dashboard stats ── */
   const fetchDashboardStats = async () => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -558,9 +606,13 @@ const Admin = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-primary bg-primary/8 px-2.5 py-1.5 rounded-full border border-primary/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                  Live
+                <span className={`hidden sm:inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full border transition-all ${
+                  isLive
+                    ? "text-primary bg-primary/8 border-primary/20"
+                    : "text-muted-foreground bg-muted/30 border-border/30"
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isLive ? "bg-primary animate-pulse" : "bg-muted-foreground"}`} />
+                  {isLive ? "Live" : "Connecting…"}
                 </span>
                 <Button variant="outline" onClick={handleLogout} size="sm" className="border-border hover:bg-muted text-xs">
                   <LogOut className="w-3.5 h-3.5 mr-1.5" /> Logout
@@ -654,6 +706,43 @@ const Admin = () => {
                       View all <ChevronRight className="w-3 h-3" />
                     </button>
                   </div>
+                </div>
+
+                {/* Live Activity Feed */}
+                <div className="mt-6 glass-card rounded-2xl p-5 border border-primary/10">
+                  <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-primary" />
+                    Live Activity Feed
+                    <span className={`ml-auto inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full ${isLive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isLive ? "bg-primary animate-pulse" : "bg-muted-foreground"}`} />
+                      {isLive ? "Watching live" : "Connecting…"}
+                    </span>
+                  </h3>
+                  {liveActivity.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Activity className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                      <p className="text-xs text-muted-foreground">Waiting for activity… New user registrations, trip plans, and AI usage will appear here in real-time.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      <AnimatePresence>
+                        {liveActivity.map((item, i) => (
+                          <motion.div
+                            key={`${item.time.getTime()}-${i}`}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-start justify-between gap-3 bg-muted/30 rounded-lg px-3 py-2"
+                          >
+                            <p className="text-sm text-foreground">{item.text}</p>
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap flex-shrink-0">
+                              {item.time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
 
                 {/* Platform info */}
