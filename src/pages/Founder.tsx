@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const fadeUp = {
   initial: { opacity: 0, y: 28 },
@@ -22,6 +23,17 @@ const beliefs = [
 ];
 
 const Founder = () => {
+  const { settings: fs } = useSiteSettings("founder");
+
+  const founderName = fs.name || "KroTravel Founder";
+  const founderTitle = fs.title || "Founder & CEO, KroTravel";
+  const founderTagline = fs.tagline || "I built KroTravel because I was tired of travel plans that looked great on paper but fell apart in reality.";
+  const founderVision = fs.vision || "To be the travel brain that every Indian traveler deserves — smart, honest, and deeply local.";
+  const founderPhotoUrl = fs.photo_url || null;
+  const twitterUrl = fs.twitter_url || "#";
+  const instagramUrl = fs.instagram_url || "#";
+  const linkedinUrl = fs.linkedin_url || "#";
+
   return (
     <div className="min-h-screen relative overflow-x-hidden">
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -53,20 +65,24 @@ const Founder = () => {
                 <span className="text-mint-gradient italic">KroTravel</span>
               </h1>
 
-              <p className="text-sm sm:text-lg font-medium mb-2" style={{ color: "hsl(158, 38%, 30%)" }}>
-                Founder & CEO, KroTravel
+              <p className="text-sm sm:text-lg font-bold mb-2" style={{ color: "hsl(158, 38%, 15%)" }}>
+                {founderName}
+              </p>
+
+              <p className="text-sm font-medium mb-3" style={{ color: "hsl(158, 38%, 30%)" }}>
+                {founderTitle}
               </p>
 
               <p className="text-sm sm:text-base leading-relaxed" style={{ color: "hsl(158, 18%, 44%)" }}>
-                Building the travel brain every Indian traveler deserves — smart, honest, and deeply local.
+                {founderTagline}
               </p>
 
               {/* Social */}
               <div className="flex gap-3 mt-6">
                 {[
-                  { Icon: Twitter, href: "#", label: "Twitter" },
-                  { Icon: Instagram, href: "#", label: "Instagram" },
-                  { Icon: Linkedin, href: "#", label: "LinkedIn" },
+                  { Icon: Twitter, href: twitterUrl, label: "Twitter" },
+                  { Icon: Instagram, href: instagramUrl, label: "Instagram" },
+                  { Icon: Linkedin, href: linkedinUrl, label: "LinkedIn" },
                 ].map(({ Icon, href, label }) => (
                   <a key={label} href={href}
                     className="w-10 h-10 rounded-xl flex items-center justify-center glass-panel hover:bg-primary/10 hover:text-primary transition-all duration-300 text-muted-foreground"
@@ -77,7 +93,7 @@ const Founder = () => {
               </div>
             </motion.div>
 
-            {/* Right — avatar card */}
+            {/* Right — photo card */}
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -85,18 +101,21 @@ const Founder = () => {
               className="flex justify-center"
             >
               <div className="relative">
-                {/* Glow ring */}
                 <div className="absolute inset-0 rounded-3xl animate-glow-ring" style={{ borderRadius: "24px" }} />
                 <div className="prism-card p-2 rounded-3xl relative z-10">
-                  <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-2xl flex items-center justify-center overflow-hidden"
+                  <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-2xl overflow-hidden flex items-center justify-center"
                     style={{ background: "linear-gradient(135deg, hsla(158, 42%, 38%, 0.12), hsla(162, 45%, 28%, 0.08))" }}>
-                    <div className="text-center">
-                      <div className="w-24 h-24 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-4 border-4 border-primary/20">
-                        <Compass className="w-10 h-10 text-primary" />
+                    {founderPhotoUrl ? (
+                      <img src={founderPhotoUrl} alt={founderName} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-center">
+                        <div className="w-24 h-24 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-4 border-4 border-primary/20">
+                          <Compass className="w-10 h-10 text-primary" />
+                        </div>
+                        <p className="text-sm font-bold" style={{ color: "hsl(158, 38%, 20%)" }}>{founderName}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{founderTitle}</p>
                       </div>
-                      <p className="text-sm font-bold" style={{ color: "hsl(158, 38%, 20%)" }}>KroTravel Founder</p>
-                      <p className="text-xs text-muted-foreground mt-1">CEO & Builder</p>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -112,9 +131,9 @@ const Founder = () => {
             <Quote className="w-10 h-10 text-primary/40 mx-auto mb-5" />
             <blockquote className="text-xl sm:text-2xl font-heading leading-relaxed mb-6 italic"
               style={{ color: "hsl(158, 38%, 18%)" }}>
-              "I built KroTravel because I was tired of travel plans that looked great on paper but fell apart in reality."
+              "{founderTagline}"
             </blockquote>
-            <p className="text-sm font-medium text-primary">— Founder, KroTravel</p>
+            <p className="text-sm font-medium text-primary">— {founderName}, KroTravel</p>
           </motion.div>
         </div>
       </section>
@@ -130,19 +149,11 @@ const Founder = () => {
           </motion.div>
 
           {[
-            {
-              para: "I've been a traveler my whole life — solo trips, family trips, last-minute weekend escapes. And every time I tried to plan, I found myself lost in a sea of generic blog posts and cookie-cutter itineraries that had no idea what my budget was, how many people I was traveling with, or what I actually wanted to experience.",
-            },
-            {
-              para: "The breaking point was a trip to Himachal where I followed a '3-day Manali itinerary' I found online. Day 1 was fine. Day 2 had us trying to reach a place that closes at 12pm — the itinerary didn't mention that. Day 3 we ran over budget by ₹4,000 because the 'budget estimates' were from 2019.",
-            },
-            {
-              para: "So I built KroTravel. An AI that doesn't just give you a list of places — it thinks about bus timings, lunch spots that are actually open, how long it really takes to walk from one place to another, and what things genuinely cost in 2025.",
-            },
-            {
-              para: "KroTravel is my answer to the question: what if your smartest, most well-traveled friend planned your entire trip for you? Someone who is honest about costs, knows the shortcuts, and actually cares whether you have a good time.",
-            },
-          ].map((s, i) => (
+            "I've been a traveler my whole life — solo trips, family trips, last-minute weekend escapes. And every time I tried to plan, I found myself lost in a sea of generic blog posts and cookie-cutter itineraries.",
+            "The breaking point was a trip to Himachal where I followed a '3-day Manali itinerary' I found online. Day 2 had us trying to reach a place that closes at 12pm. Day 3 we ran over budget by ₹4,000 because the estimates were from 2019.",
+            "So I built KroTravel. An AI that doesn't just give you a list of places — it thinks about bus timings, lunch spots that are actually open, how long it really takes to walk from one place to another.",
+            "KroTravel is my answer to the question: what if your smartest, most well-traveled friend planned your entire trip for you? Someone who is honest about costs, knows the shortcuts, and actually cares.",
+          ].map((para, i) => (
             <motion.p
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -152,7 +163,7 @@ const Founder = () => {
               className="text-base sm:text-lg leading-relaxed"
               style={{ color: "hsl(158, 18%, 38%)" }}
             >
-              {s.para}
+              {para}
             </motion.p>
           ))}
         </div>
@@ -197,10 +208,10 @@ const Founder = () => {
             </div>
             <p className="section-label mb-3">The Vision</p>
             <h2 className="text-2xl sm:text-3xl font-heading mb-4" style={{ color: "hsl(158, 45%, 10%)" }}>
-              To be the travel brain every Indian traveler deserves
+              {founderVision}
             </h2>
             <p className="text-sm sm:text-base leading-relaxed mb-6" style={{ color: "hsl(158, 18%, 44%)" }}>
-              Smart, honest, and deeply local. Not just for the metros. For every traveler, every budget, every kind of trip — from a solo spiritual journey to a large family road trip.
+              Not just for the metros. For every traveler, every budget, every kind of trip — from a solo spiritual journey to a large family road trip.
             </p>
             <Link to="/plan">
               <button className="btn-primary px-8 py-3.5 text-sm flex items-center gap-2 mx-auto group">
