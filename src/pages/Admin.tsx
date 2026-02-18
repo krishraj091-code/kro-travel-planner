@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -7,7 +7,9 @@ import {
   TrendingUp, ChevronRight, X, Check, AlertCircle, Download, Ban,
   Gift, Calendar, DollarSign, Activity, Search, UserCheck, Clock,
   Settings, Home, MapPin, Lock, CreditCard, Image, Megaphone, Save,
-  ToggleLeft, ToggleRight, Globe, Phone, BookOpen, ScrollText
+  ToggleLeft, ToggleRight, Globe, Phone, BookOpen, ScrollText,
+  Camera, Upload, UserPlus, GripVertical, ArrowUp, ArrowDown,
+  ChevronDown, ChevronUp, Pencil, Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,15 +27,17 @@ interface UserProfile { id: string; user_id: string; full_name: string | null; e
 interface UserWithStats extends UserProfile { trip_count: number; paid_count: number; last_active: string | null; is_super_premium: boolean; }
 interface PromoCode { id: string; code: string; discount_type: string; discount_value: number; uses_count: number; max_uses: number | null; is_active: boolean; expires_at: string | null; new_users_only: boolean; one_time_per_user: boolean; min_cart_value: number; created_at: string; }
 interface SuperPremiumUser { id: string; user_id: string; access_type: string; expires_at: string | null; notes: string | null; is_active: boolean; granted_at: string; profiles?: { full_name: string | null; email: string | null } | null; }
+interface TeamMember { id: string; name: string; role: string; description: string | null; photo_url: string | null; display_order: number; is_active: boolean; }
 
-type Tab = "dashboard" | "users" | "itineraries" | "promos" | "super_premium" | "page_controls";
+type Tab = "dashboard" | "users" | "itineraries" | "promos" | "super_premium" | "team" | "page_controls";
 
-const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
+const TABS: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
   { id: "users", label: "Users", icon: Users },
   { id: "itineraries", label: "Itineraries", icon: FileText },
-  { id: "promos", label: "Promo Codes", icon: Tag },
+  { id: "promos", label: "Promos", icon: Tag },
   { id: "super_premium", label: "Super Premium", icon: Crown },
+  { id: "team", label: "Team", icon: Camera },
   { id: "page_controls", label: "Page Controls", icon: Settings },
 ];
 
@@ -48,13 +52,13 @@ const sectionLabels: Record<string, string> = {
 
 /* ─── stat card ─── */
 const StatCard = ({ icon: Icon, label, value, sub, color = "text-primary" }: { icon: React.ElementType; label: string; value: string | number; sub?: string; color?: string }) => (
-  <div className="glass-card rounded-2xl p-5 flex items-center gap-4">
-    <div className={`p-3 rounded-xl bg-primary/10 ${color}`}>
+  <div className="glass-panel rounded-2xl p-5 flex items-center gap-4 border border-border/50">
+    <div className={`p-3 rounded-xl bg-primary/8 flex-shrink-0 ${color}`}>
       <Icon className="w-5 h-5" />
     </div>
-    <div>
+    <div className="min-w-0">
       <p className="text-2xl font-bold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground truncate">{label}</p>
       {sub && <p className="text-xs text-primary mt-0.5">{sub}</p>}
     </div>
   </div>
@@ -65,12 +69,12 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // dashboard stats
   const [stats, setStats] = useState({ totalUsers: 0, totalPaid: 0, totalFree: 0, todayGenerated: 0, superPremiumCount: 0, activeToday: 0 });
-
 
   // itineraries
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
@@ -103,6 +107,20 @@ const Admin = () => {
   const [activePageControl, setActivePageControl] = useState("home");
   const [settingsSaving, setSettingsSaving] = useState(false);
 
+  // team management
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [memberForm, setMemberForm] = useState({ name: "", role: "", description: "", display_order: 0 });
+  const [memberPhotoFile, setMemberPhotoFile] = useState<File | null>(null);
+  const [memberPhotoPreview, setMemberPhotoPreview] = useState<string | null>(null);
+  const [memberSaving, setMemberSaving] = useState(false);
+  const [founderPhotoFile, setFounderPhotoFile] = useState<File | null>(null);
+  const [founderPhotoPreview, setFounderPhotoPreview] = useState<string | null>(null);
+  const [founderPhotoUploading, setFounderPhotoUploading] = useState(false);
+  const memberPhotoRef = useRef<HTMLInputElement>(null);
+  const founderPhotoRef = useRef<HTMLInputElement>(null);
+
   /* ── auth check ── */
   useEffect(() => { checkAdmin(); }, []);
 
@@ -121,7 +139,7 @@ const Admin = () => {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    await Promise.all([fetchDashboardStats(), fetchItineraries(), fetchUsers(), fetchPromos(), fetchSuperPremium(), fetchSiteSettings()]);
+    await Promise.all([fetchDashboardStats(), fetchItineraries(), fetchUsers(), fetchPromos(), fetchSuperPremium(), fetchSiteSettings(), fetchTeamMembers()]);
     setLoading(false);
   }, []);
 
@@ -355,6 +373,97 @@ const Admin = () => {
 
   const handleLogout = async () => { await supabase.auth.signOut(); navigate("/"); };
 
+  /* ── team members ── */
+  const fetchTeamMembers = async () => {
+    setTeamLoading(true);
+    const { data } = await supabase.from("team_members").select("*").order("display_order", { ascending: true });
+    setTeamMembers(data || []);
+    setTeamLoading(false);
+  };
+
+  const openNewMember = () => {
+    setEditingMember(null);
+    setMemberForm({ name: "", role: "", description: "", display_order: teamMembers.length });
+    setMemberPhotoFile(null);
+    setMemberPhotoPreview(null);
+  };
+
+  const openEditMember = (m: TeamMember) => {
+    setEditingMember(m);
+    setMemberForm({ name: m.name, role: m.role, description: m.description || "", display_order: m.display_order });
+    setMemberPhotoFile(null);
+    setMemberPhotoPreview(m.photo_url);
+  };
+
+  const handleMemberPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMemberPhotoFile(file);
+    setMemberPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const saveMember = async () => {
+    if (!memberForm.name.trim() || !memberForm.role.trim()) {
+      toast({ title: "Name and role are required", variant: "destructive" }); return;
+    }
+    setMemberSaving(true);
+    try {
+      let photoUrl = editingMember?.photo_url || null;
+      if (memberPhotoFile) {
+        const ext = memberPhotoFile.name.split(".").pop();
+        const path = `member-${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("team-photos").upload(path, memberPhotoFile, { upsert: true });
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage.from("team-photos").getPublicUrl(path);
+        photoUrl = urlData.publicUrl;
+      }
+
+      if (editingMember) {
+        await supabase.from("team_members").update({ name: memberForm.name, role: memberForm.role, description: memberForm.description || null, display_order: memberForm.display_order, photo_url: photoUrl }).eq("id", editingMember.id);
+        toast({ title: "✅ Member updated!" });
+      } else {
+        await supabase.from("team_members").insert({ name: memberForm.name, role: memberForm.role, description: memberForm.description || null, display_order: memberForm.display_order, photo_url: photoUrl });
+        toast({ title: "✅ Team member added!" });
+      }
+      setEditingMember(null);
+      fetchTeamMembers();
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    setMemberSaving(false);
+  };
+
+  const deleteMember = async (id: string) => {
+    await supabase.from("team_members").delete().eq("id", id);
+    toast({ title: "Deleted" });
+    fetchTeamMembers();
+  };
+
+  const toggleMemberActive = async (id: string, current: boolean) => {
+    await supabase.from("team_members").update({ is_active: !current }).eq("id", id);
+    fetchTeamMembers();
+  };
+
+  const handleFounderPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFounderPhotoFile(file);
+    setFounderPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const uploadFounderPhoto = async () => {
+    if (!founderPhotoFile) return;
+    setFounderPhotoUploading(true);
+    try {
+      const ext = founderPhotoFile.name.split(".").pop();
+      const path = `founder-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("team-photos").upload(path, founderPhotoFile, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("team-photos").getPublicUrl(path);
+      updatePageSetting("founder", "photo_url", data.publicUrl);
+      toast({ title: "✅ Photo uploaded! Save settings to apply." });
+    } catch (err: any) { toast({ title: "Upload failed", description: err.message, variant: "destructive" }); }
+    setFounderPhotoUploading(false);
+  };
+
   if (!isAdmin) return null;
 
   /* ══════════════════════════════════════════════════
@@ -365,40 +474,56 @@ const Admin = () => {
       <Navbar />
 
       <div className="pt-20 pb-16">
-        {/* ── Header ── */}
-        <div className="px-4 sm:px-6 lg:px-8 pt-6 pb-0 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-heading font-bold text-foreground flex items-center gap-2">
-                <Shield className="w-7 h-7 text-primary" /> Admin Control Panel
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">KroTravel — Internal Dashboard</p>
+        {/* ── Professional Header ── */}
+        <div className="border-b border-border/50 bg-card/60 backdrop-blur-sm sticky top-[72px] z-30">
+          <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-4.5 h-4.5 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-foreground leading-tight">Admin Panel</h1>
+                  <p className="text-xs text-muted-foreground">KroTravel Control Center</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-primary bg-primary/8 px-2.5 py-1.5 rounded-full border border-primary/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  Live
+                </span>
+                <Button variant="outline" onClick={handleLogout} size="sm" className="border-border hover:bg-muted text-xs">
+                  <LogOut className="w-3.5 h-3.5 mr-1.5" /> Logout
+                </Button>
+              </div>
             </div>
-            <Button variant="outline" onClick={handleLogout} size="sm" className="border-border hover:bg-muted">
-              <LogOut className="w-4 h-4 mr-2" /> Logout
-            </Button>
-          </div>
 
-          {/* ── Tab Nav ── */}
-          <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
-            {TABS.map(tab => {
-              const Icon = tab.icon;
-              const active = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200
-                    ${active ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab.label}
-                  {tab.id === "super_premium" && stats.superPremiumCount > 0 && (
-                    <span className="bg-primary-foreground/20 text-xs px-1.5 py-0.5 rounded-full">{stats.superPremiumCount}</span>
-                  )}
-                </button>
-              );
-            })}
+            {/* ── Tab Nav ── */}
+            <div className="flex gap-0.5 overflow-x-auto pb-0 scrollbar-hide -mx-1 px-1">
+              {TABS.map(tab => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-all duration-200 relative
+                      ${active
+                        ? "text-primary border-b-2 border-primary"
+                        : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"}`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {tab.label}
+                    {tab.id === "super_premium" && stats.superPremiumCount > 0 && (
+                      <span className="bg-primary/15 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">{stats.superPremiumCount}</span>
+                    )}
+                    {tab.id === "team" && teamMembers.length > 0 && (
+                      <span className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0.5 rounded-full">{teamMembers.length}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -842,20 +967,200 @@ const Admin = () => {
               </motion.div>
             )}
 
+            {/* ═══ TEAM MANAGEMENT ═══ */}
+            {activeTab === "team" && (
+              <motion.div key="team" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+                <div className="grid lg:grid-cols-3 gap-6">
+                  {/* Left: member form */}
+                  <div className="lg:col-span-1">
+                    <div className="glass-panel rounded-3xl p-6 space-y-4 border border-border/50">
+                      <h3 className="font-semibold text-foreground flex items-center gap-2">
+                        {editingMember ? <><Pencil className="w-4 h-4 text-primary" /> Edit Member</> : <><UserPlus className="w-4 h-4 text-primary" /> Add Team Member</>}
+                      </h3>
+
+                      {/* Photo upload */}
+                      <div className="flex flex-col items-center gap-3">
+                        <div
+                          className="w-24 h-24 rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer border-2 border-dashed border-border hover:border-primary/50 transition-colors"
+                          style={{ background: "hsla(158, 42%, 38%, 0.06)" }}
+                          onClick={() => memberPhotoRef.current?.click()}
+                        >
+                          {memberPhotoPreview ? (
+                            <img src={memberPhotoPreview} alt="Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="text-center">
+                              <Camera className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
+                              <p className="text-[10px] text-muted-foreground">Upload photo</p>
+                            </div>
+                          )}
+                        </div>
+                        <input ref={memberPhotoRef} type="file" accept="image/*" className="hidden" onChange={handleMemberPhotoChange} />
+                        <button onClick={() => memberPhotoRef.current?.click()} className="text-xs text-primary hover:underline">
+                          {memberPhotoPreview ? "Change photo" : "Upload photo"}
+                        </button>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Full Name *</Label>
+                        <Input className="mt-1" placeholder="e.g. Arjun Sharma" value={memberForm.name} onChange={e => setMemberForm(f => ({ ...f, name: e.target.value }))} />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Role / Title *</Label>
+                        <Input className="mt-1" placeholder="e.g. Co-founder & CTO" value={memberForm.role} onChange={e => setMemberForm(f => ({ ...f, role: e.target.value }))} />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Short Description</Label>
+                        <Textarea className="mt-1 text-sm min-h-[80px]" placeholder="Brief bio or what they do at KroTravel..." value={memberForm.description} onChange={e => setMemberForm(f => ({ ...f, description: e.target.value }))} />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Display Order (lower = first)</Label>
+                        <Input type="number" className="mt-1" value={memberForm.display_order} onChange={e => setMemberForm(f => ({ ...f, display_order: +e.target.value }))} />
+                      </div>
+
+                      <div className="flex gap-2 pt-1">
+                        <button onClick={saveMember} disabled={memberSaving} className="btn-primary text-sm px-4 py-2 flex-1 flex items-center justify-center gap-2 disabled:opacity-50">
+                          {memberSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                          {editingMember ? "Update" : "Add Member"}
+                        </button>
+                        {editingMember && (
+                          <button onClick={openNewMember} className="btn-ghost-glass text-sm px-3 py-2">
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Founder photo uploader */}
+                    <div className="glass-panel rounded-3xl p-6 space-y-4 border border-border/50 mt-4">
+                      <h3 className="font-semibold text-foreground flex items-center gap-2">
+                        <Camera className="w-4 h-4 text-primary" /> Founder Photo
+                      </h3>
+                      <p className="text-xs text-muted-foreground">Upload a photo that will appear on the Founder page. After upload, go to Page Controls → Founder to save.</p>
+                      <div className="flex flex-col items-center gap-3">
+                        <div
+                          className="w-32 h-32 rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer border-2 border-dashed border-border hover:border-primary/50 transition-colors"
+                          style={{ background: "hsla(158, 42%, 38%, 0.06)" }}
+                          onClick={() => founderPhotoRef.current?.click()}
+                        >
+                          {founderPhotoPreview ? (
+                            <img src={founderPhotoPreview} alt="Founder" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="text-center p-3">
+                              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
+                              <p className="text-[10px] text-muted-foreground">Click to upload</p>
+                            </div>
+                          )}
+                        </div>
+                        <input ref={founderPhotoRef} type="file" accept="image/*" className="hidden" onChange={handleFounderPhotoChange} />
+                      </div>
+                      {founderPhotoFile && (
+                        <button onClick={uploadFounderPhoto} disabled={founderPhotoUploading} className="btn-primary text-sm px-4 py-2 w-full flex items-center justify-center gap-2">
+                          {founderPhotoUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          Upload & Copy URL
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right: team list */}
+                  <div className="lg:col-span-2">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-foreground">
+                        Team Members <span className="text-muted-foreground text-sm font-normal">({teamMembers.length})</span>
+                      </h3>
+                      <Button variant="outline" size="sm" onClick={fetchTeamMembers}><RefreshCw className="w-3.5 h-3.5" /></Button>
+                    </div>
+
+                    {teamLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      </div>
+                    ) : teamMembers.length === 0 ? (
+                      <div className="glass-panel rounded-3xl p-10 text-center border border-dashed border-border">
+                        <Users className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground">No team members yet.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Add your first team member using the form.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {teamMembers.map((m, i) => (
+                          <motion.div
+                            key={m.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.04 }}
+                            className={`glass-panel rounded-2xl p-4 flex items-center gap-4 border transition-all ${m.is_active ? "border-border/50" : "border-border/20 opacity-60"}`}
+                          >
+                            {/* Photo */}
+                            <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center"
+                              style={{ background: "hsla(158, 42%, 38%, 0.10)" }}>
+                              {m.photo_url ? (
+                                <img src={m.photo_url} alt={m.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <Users className="w-6 h-6 text-primary/40" />
+                              )}
+                            </div>
+
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
+                                {!m.is_active && <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Hidden</span>}
+                              </div>
+                              <p className="text-xs text-primary font-medium">{m.role}</p>
+                              {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{m.description}</p>}
+                            </div>
+
+                            {/* Order badge */}
+                            <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-lg flex-shrink-0">#{m.display_order}</div>
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <button
+                                onClick={() => toggleMemberActive(m.id, m.is_active)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                                title={m.is_active ? "Hide from public" : "Show on public page"}
+                              >
+                                {m.is_active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                              </button>
+                              <button
+                                onClick={() => openEditMember(m)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-primary/10 transition-colors text-muted-foreground hover:text-primary"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => deleteMember(m.id)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* ═══ PAGE CONTROLS ═══ */}
             {activeTab === "page_controls" && (
               <motion.div key="page_controls" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 <div className="flex gap-3 mb-6 flex-wrap">
                   {[
-                    { key: "home", label: "🏠 Home Page", Icon: Home },
-                    { key: "plan_trip", label: "🗺️ Plan My Trip", Icon: MapPin },
-                    { key: "auth", label: "🔒 Auth Page", Icon: Lock },
-                    { key: "plan_selection", label: "💳 Plan Selection", Icon: CreditCard },
-                    { key: "free_itinerary", label: "📄 Free Itinerary", Icon: FileText },
-                    { key: "paid_itinerary", label: "⭐ Paid Itinerary", Icon: Star },
+                    { key: "home", label: "🏠 Home", Icon: Home },
+                    { key: "about", label: "🧭 About", Icon: Info },
+                    { key: "founder", label: "👤 Founder", Icon: Users },
+                    { key: "plan_trip", label: "🗺️ Plan Trip", Icon: MapPin },
+                    { key: "auth", label: "🔒 Auth", Icon: Lock },
+                    { key: "plan_selection", label: "💳 Plans", Icon: CreditCard },
+                    { key: "free_itinerary", label: "📄 Free Itin.", Icon: FileText },
+                    { key: "paid_itinerary", label: "⭐ Paid Itin.", Icon: Star },
                     { key: "memory_vault", label: "🖼️ Memory Vault", Icon: Image },
-                    { key: "contact", label: "📞 Contact/Support", Icon: Phone },
-                    { key: "legal", label: "📜 Legal Pages", Icon: ScrollText },
+                    { key: "contact", label: "📞 Contact", Icon: Phone },
+                    { key: "legal", label: "📜 Legal", Icon: ScrollText },
                   ].map(p => (
                     <button
                       key={p.key}
@@ -936,6 +1241,63 @@ const Admin = () => {
                           <Input className="mt-1" value={siteSettings.home?.stats_generation_time || ""} onChange={e => updatePageSetting("home", "stats_generation_time", e.target.value)} />
                         </div>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── ABOUT PAGE CONTROLS ── */}
+                {activePageControl === "about" && (
+                  <div className="glass-panel rounded-3xl p-6 space-y-4 border border-border/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><Info className="w-5 h-5 text-primary" /> About Page</h2>
+                      <button onClick={() => saveSiteSettings("about")} disabled={settingsSaving} className="btn-primary text-sm px-4 py-2 flex items-center gap-2 disabled:opacity-50">
+                        {settingsSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
+                      </button>
+                    </div>
+                    <div><Label className="text-xs text-muted-foreground">Main Headline</Label><Input className="mt-1" value={siteSettings.about?.headline || ""} onChange={e => updatePageSetting("about", "headline", e.target.value)} /></div>
+                    <div><Label className="text-xs text-muted-foreground">Sub Headline</Label><Textarea className="mt-1 text-sm min-h-[70px]" value={siteSettings.about?.sub_headline || ""} onChange={e => updatePageSetting("about", "sub_headline", e.target.value)} /></div>
+                    <div><Label className="text-xs text-muted-foreground">Mission Statement</Label><Textarea className="mt-1 text-sm min-h-[70px]" value={siteSettings.about?.mission || ""} onChange={e => updatePageSetting("about", "mission", e.target.value)} /></div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div><Label className="text-xs text-muted-foreground">Trips Planned Stat</Label><Input className="mt-1" value={siteSettings.about?.trips_planned || ""} onChange={e => updatePageSetting("about", "trips_planned", e.target.value)} /></div>
+                      <div><Label className="text-xs text-muted-foreground">Cities Covered</Label><Input className="mt-1" value={siteSettings.about?.cities_covered || ""} onChange={e => updatePageSetting("about", "cities_covered", e.target.value)} /></div>
+                      <div><Label className="text-xs text-muted-foreground">Avg Rating</Label><Input className="mt-1" value={siteSettings.about?.avg_rating || ""} onChange={e => updatePageSetting("about", "avg_rating", e.target.value)} /></div>
+                    </div>
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+                      💡 Manage your team members (photos, roles, bios) from the <strong>Team</strong> tab. They automatically appear on the About page.
+                    </div>
+                  </div>
+                )}
+
+                {/* ── FOUNDER PAGE CONTROLS ── */}
+                {activePageControl === "founder" && (
+                  <div className="glass-panel rounded-3xl p-6 space-y-4 border border-border/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><Users className="w-5 h-5 text-primary" /> Founder Page</h2>
+                      <button onClick={() => saveSiteSettings("founder")} disabled={settingsSaving} className="btn-primary text-sm px-4 py-2 flex items-center gap-2 disabled:opacity-50">
+                        {settingsSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
+                      </button>
+                    </div>
+                    <div><Label className="text-xs text-muted-foreground">Founder Name</Label><Input className="mt-1" placeholder="e.g. Rahul Sharma" value={siteSettings.founder?.name || ""} onChange={e => updatePageSetting("founder", "name", e.target.value)} /></div>
+                    <div><Label className="text-xs text-muted-foreground">Title / Role</Label><Input className="mt-1" placeholder="e.g. Founder & CEO, KroTravel" value={siteSettings.founder?.title || ""} onChange={e => updatePageSetting("founder", "title", e.target.value)} /></div>
+                    <div><Label className="text-xs text-muted-foreground">Tagline / Quote</Label><Textarea className="mt-1 text-sm min-h-[80px]" placeholder="A short personal quote..." value={siteSettings.founder?.tagline || ""} onChange={e => updatePageSetting("founder", "tagline", e.target.value)} /></div>
+                    <div><Label className="text-xs text-muted-foreground">Vision Statement</Label><Textarea className="mt-1 text-sm min-h-[70px]" value={siteSettings.founder?.vision || ""} onChange={e => updatePageSetting("founder", "vision", e.target.value)} /></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div><Label className="text-xs text-muted-foreground">Twitter URL</Label><Input className="mt-1" placeholder="https://twitter.com/..." value={siteSettings.founder?.twitter_url || ""} onChange={e => updatePageSetting("founder", "twitter_url", e.target.value)} /></div>
+                      <div><Label className="text-xs text-muted-foreground">Instagram URL</Label><Input className="mt-1" placeholder="https://instagram.com/..." value={siteSettings.founder?.instagram_url || ""} onChange={e => updatePageSetting("founder", "instagram_url", e.target.value)} /></div>
+                      <div><Label className="text-xs text-muted-foreground">LinkedIn URL</Label><Input className="mt-1" placeholder="https://linkedin.com/in/..." value={siteSettings.founder?.linkedin_url || ""} onChange={e => updatePageSetting("founder", "linkedin_url", e.target.value)} /></div>
+                    </div>
+                    {siteSettings.founder?.photo_url && (
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border">
+                        <img src={siteSettings.founder.photo_url} alt="Founder" className="w-12 h-12 rounded-xl object-cover" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground">Founder photo set</p>
+                          <p className="text-xs text-muted-foreground truncate">{siteSettings.founder.photo_url}</p>
+                        </div>
+                        <button onClick={() => updatePageSetting("founder", "photo_url", "")} className="text-destructive hover:text-destructive/80 text-xs">Remove</button>
+                      </div>
+                    )}
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+                      💡 Upload the founder photo from the <strong>Team</strong> tab, then paste the URL here, or it'll be auto-filled after upload.
                     </div>
                   </div>
                 )}

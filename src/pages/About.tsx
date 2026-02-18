@@ -1,11 +1,14 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  ArrowRight, Compass, Heart, Zap, Globe, Users, Star, Shield,
-  CheckCircle2, TrendingUp, Sparkles, Map, Clock, Wallet
+  ArrowRight, Compass, Heart, Zap, Globe, Star, Shield,
+  CheckCircle2, TrendingUp, Sparkles, Wallet, Users, Camera
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const fadeUp = {
   initial: { opacity: 0, y: 28 },
@@ -15,36 +18,12 @@ const fadeUp = {
 };
 
 const values = [
-  {
-    Icon: Heart,
-    title: "Human-First AI",
-    desc: "Our AI doesn't just plan routes — it thinks about your comfort, pace, and real costs. Every suggestion is filtered through the lens of a real traveler.",
-  },
-  {
-    Icon: Wallet,
-    title: "Budget Honest",
-    desc: "We show you real numbers, not aspirational ones. No hidden costs, no promotional fluff. Just an honest breakdown of what your trip will actually cost.",
-  },
-  {
-    Icon: Globe,
-    title: "Local Intelligence",
-    desc: "Every itinerary is verified against local knowledge — bus timings, seasonal crowds, actual walking distances. Things travel blogs never tell you.",
-  },
-  {
-    Icon: Zap,
-    title: "Built for Speed",
-    desc: "From preference form to full itinerary in under 60 seconds. Because your wanderlust shouldn't have to wait.",
-  },
-  {
-    Icon: Shield,
-    title: "Private by Design",
-    desc: "Your travel data, your memories — they stay yours. No selling data, no third-party trackers inside your journey.",
-  },
-  {
-    Icon: Sparkles,
-    title: "Always Evolving",
-    desc: "We update our AI with real traveler feedback after every trip. Every itinerary makes the next one smarter.",
-  },
+  { Icon: Heart, title: "Human-First AI", desc: "Our AI thinks about your comfort, pace, and real costs. Every suggestion is filtered through the lens of a real traveler." },
+  { Icon: Wallet, title: "Budget Honest", desc: "No hidden costs, no promotional fluff. Just an honest breakdown of what your trip will actually cost." },
+  { Icon: Globe, title: "Local Intelligence", desc: "Every itinerary is verified against local knowledge — bus timings, seasonal crowds, actual walking distances." },
+  { Icon: Zap, title: "Built for Speed", desc: "From preference form to full itinerary in under 60 seconds. Your wanderlust shouldn't have to wait." },
+  { Icon: Shield, title: "Private by Design", desc: "Your travel data, your memories — they stay yours. No selling data, no third-party trackers inside your journey." },
+  { Icon: Sparkles, title: "Always Evolving", desc: "We update our AI with real traveler feedback after every trip. Every itinerary makes the next one smarter." },
 ];
 
 const milestones = [
@@ -55,17 +34,41 @@ const milestones = [
   { year: "2026", label: "50K+ Trips & Growing", desc: "Expanding to more Indian cities and international routes" },
 ];
 
-const stats = [
-  { value: "50K+", label: "Trips Planned" },
-  { value: "200+", label: "Cities Covered" },
-  { value: "4.9★", label: "Average Rating" },
-  { value: "60s", label: "To Generate" },
-];
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  description: string | null;
+  photo_url: string | null;
+  display_order: number;
+}
 
 const About = () => {
+  const { settings: as } = useSiteSettings("about");
+  const [team, setTeam] = useState<TeamMember[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("team_members")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .then(({ data }) => setTeam(data || []));
+  }, []);
+
+  const headline = as.headline || "We believe travel should feel human.";
+  const sub_headline = as.sub_headline || "KroTravel was born from a simple frustration — generic itineraries that list the same 10 places every tourist visits. We set out to build something that thinks like a local.";
+  const mission = as.mission || "To make every journey feel personally crafted — not copy-pasted.";
+
+  const stats = [
+    { value: as.trips_planned || "50K+", label: "Trips Planned" },
+    { value: as.cities_covered || "200+", label: "Cities Covered" },
+    { value: as.avg_rating ? `${as.avg_rating}★` : "4.9★", label: "Average Rating" },
+    { value: "60s", label: "To Generate" },
+  ];
+
   return (
     <div className="min-h-screen relative overflow-x-hidden">
-      {/* Ambient orbs */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="ambient-orb-1" style={{ top: "8%", right: "12%" }} />
         <div className="ambient-orb-2" style={{ bottom: "20%", left: "5%" }} />
@@ -94,8 +97,7 @@ const About = () => {
             className="text-4xl sm:text-6xl lg:text-7xl font-heading tracking-tight mb-6 leading-[1.08]"
             style={{ color: "hsl(158, 45%, 10%)" }}
           >
-            We believe travel should{" "}
-            <span className="text-mint-gradient italic">feel human.</span>
+            <span className="text-mint-gradient italic">{headline}</span>
           </motion.h1>
 
           <motion.p
@@ -105,7 +107,7 @@ const About = () => {
             className="text-base sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed font-light px-4"
             style={{ color: "hsl(158, 20%, 44%)" }}
           >
-            KroTravel was born from a simple frustration — generic itineraries that list the same 10 places every tourist visits. We set out to build something that thinks like a local.
+            {sub_headline}
           </motion.p>
 
           {/* Stats */}
@@ -132,11 +134,10 @@ const About = () => {
             <motion.div {...fadeUp}>
               <p className="section-label mb-3">Our Mission</p>
               <h2 className="text-3xl sm:text-4xl font-heading tracking-tight mb-5" style={{ color: "hsl(158, 45%, 10%)" }}>
-                To make every journey feel{" "}
-                <span className="text-mint-gradient">personally crafted.</span>
+                <span className="text-mint-gradient">{mission}</span>
               </h2>
               <p className="text-sm sm:text-base leading-relaxed mb-4" style={{ color: "hsl(158, 18%, 44%)" }}>
-                Not copy-pasted from a travel blog. Not generated by a chatbot that's never seen the place. KroTravel creates itineraries that are grounded in how real travel actually works — missed buses, crowded cafés, the restaurant that's better at lunch than dinner.
+                Not copy-pasted from a travel blog. Not generated by a chatbot that's never seen the place. KroTravel creates itineraries grounded in how real travel actually works.
               </p>
               <p className="text-sm sm:text-base leading-relaxed" style={{ color: "hsl(158, 18%, 44%)" }}>
                 We combine AI speed with local intelligence to give you a plan that's honest, human-paced, and actually useful on the ground.
@@ -195,6 +196,49 @@ const About = () => {
           </div>
         </div>
       </section>
+
+      {/* ── Team ── */}
+      {team.length > 0 && (
+        <section className="section-padding relative z-10">
+          <div className="max-w-6xl mx-auto">
+            <motion.div {...fadeUp} className="text-center mb-12">
+              <p className="section-label mb-3">The Team</p>
+              <h2 className="text-3xl sm:text-5xl font-heading tracking-tight" style={{ color: "hsl(158, 45%, 10%)" }}>
+                Meet the people <span className="text-mint-gradient italic">behind KroTravel</span>
+              </h2>
+            </motion.div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+              {team.map((member, i) => (
+                <motion.div
+                  key={member.id}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className="glass-panel p-5 rounded-3xl text-center group hover-lift"
+                >
+                  <div className="w-20 h-20 rounded-2xl mx-auto mb-4 overflow-hidden flex items-center justify-center"
+                    style={{ background: "hsla(158, 42%, 38%, 0.10)" }}>
+                    {member.photo_url ? (
+                      <img src={member.photo_url} alt={member.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Users className="w-8 h-8 text-primary/40" />
+                      </div>
+                    )}
+                  </div>
+                  <h4 className="text-sm font-bold mb-0.5" style={{ color: "hsl(158, 38%, 15%)" }}>{member.name}</h4>
+                  <p className="text-xs font-medium text-primary mb-2">{member.role}</p>
+                  {member.description && (
+                    <p className="text-xs leading-relaxed" style={{ color: "hsl(158, 18%, 48%)" }}>{member.description}</p>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Journey / Timeline ── */}
       <section className="section-padding relative z-10">
