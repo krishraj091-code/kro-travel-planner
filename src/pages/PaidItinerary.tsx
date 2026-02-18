@@ -33,26 +33,32 @@ const buildAffiliateLinks = (destination: string, departure: string, departureDa
   };
 };
 
-// Free image source without API key – uses Unsplash source URL pattern
+// Free image source – uses Wikimedia Commons / Google image search redirect
 const getDestPhoto = (query: string, index: number, w = 800, h = 600) => {
-  const keywords = [query, "india", "travel", "tourism", "landscape", "architecture", "street", "nature"];
-  const kw = keywords[index % keywords.length];
-  return `https://source.unsplash.com/${w}x${h}/?${encodeURIComponent(query)},${kw}`;
+  // Seed based on query + index for consistent images per destination
+  const seed = encodeURIComponent(query.replace(/\s+/g, "-").toLowerCase()) + index;
+  return `https://picsum.photos/seed/${seed}/${w}/${h}`;
 };
+
+// Get a Google image search URL for a destination query
+const getGoogleImageSearch = (destination: string) =>
+  `https://www.google.com/search?q=${encodeURIComponent(destination + " india tourism photos")}&tbm=isch`;
 
 type ActivityPhoto = { id: string; storage_path: string; place_name: string };
 
 // ─── Destination Photo Gallery ─────────────────────────────────────────────
+const PHOTO_LABELS = ["Landmark", "Nature", "Architecture", "Street Food", "Culture", "Landscape", "Temples", "Markets"];
+
 const DestinationGallery = ({ destination }: { destination: string }) => {
   const [active, setActive] = useState<number | null>(null);
-  const photoQueries = [
-    `${destination} landmark`,
-    `${destination} nature`,
-    `${destination} architecture`,
-    `${destination} food street`,
-    `${destination} culture`,
-    `${destination} landscape`,
-  ];
+  const googleSearchUrl = getGoogleImageSearch(destination);
+
+  // Generate 6 seeded picsum images for this destination
+  const photos = Array.from({ length: 6 }, (_, i) => ({
+    label: PHOTO_LABELS[i],
+    src: getDestPhoto(`${destination}-${PHOTO_LABELS[i]}`, i, i === 0 ? 1200 : 600, i === 0 ? 600 : 400),
+    lightboxSrc: getDestPhoto(`${destination}-${PHOTO_LABELS[i]}`, i, 1200, 700),
+  }));
 
   return (
     <motion.section {...fadeUp} className="mb-16">
@@ -62,17 +68,17 @@ const DestinationGallery = ({ destination }: { destination: string }) => {
           <span>{destination} <span className="text-mint-gradient">in pictures</span></span>
         </h2>
         <a
-          href={`https://www.google.com/search?q=${encodeURIComponent(destination + " india tourism")}&tbm=isch`}
+          href={googleSearchUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="booking-chip text-xs"
         >
-          See more <ExternalLink className="w-3 h-3" />
+          More on Google <ExternalLink className="w-3 h-3" />
         </a>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {photoQueries.map((q, i) => (
+        {photos.map((photo, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, scale: 0.95 }}
@@ -84,13 +90,13 @@ const DestinationGallery = ({ destination }: { destination: string }) => {
             onClick={() => setActive(i)}
           >
             <img
-              src={`https://source.unsplash.com/${i === 0 ? "1200x600" : "600x400"}/?${encodeURIComponent(q)}`}
-              alt={q}
+              src={photo.src}
+              alt={`${destination} ${photo.label}`}
               loading="lazy"
-              onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
+              onError={(e) => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${i + 10}/600/400`; }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
-              <span className="text-white text-xs font-medium capitalize">{q.replace(destination + " ", "")}</span>
+              <span className="text-white text-xs font-medium">{photo.label}</span>
             </div>
           </motion.div>
         ))}
@@ -114,8 +120,8 @@ const DestinationGallery = ({ destination }: { destination: string }) => {
               onClick={(e) => e.stopPropagation()}
             >
               <img
-                src={`https://source.unsplash.com/1200x700/?${encodeURIComponent(photoQueries[active])}`}
-                alt={photoQueries[active]}
+                src={photos[active].lightboxSrc}
+                alt={`${destination} ${photos[active].label}`}
                 className="w-full object-cover"
               />
               <button
@@ -125,11 +131,11 @@ const DestinationGallery = ({ destination }: { destination: string }) => {
                 <X className="w-5 h-5" />
               </button>
               <div className="absolute bottom-4 left-4 right-4 flex justify-center gap-2">
-                <button onClick={() => setActive((active - 1 + photoQueries.length) % photoQueries.length)}
+                <button onClick={() => setActive((active - 1 + photos.length) % photos.length)}
                   className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white">
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <button onClick={() => setActive((active + 1) % photoQueries.length)}
+                <button onClick={() => setActive((active + 1) % photos.length)}
                   className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white">
                   <ChevronRight className="w-5 h-5" />
                 </button>

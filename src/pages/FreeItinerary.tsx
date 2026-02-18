@@ -69,11 +69,11 @@ const FreeItinerary = () => {
       <section className="relative pt-0 pb-12">
         <div className="relative h-64 sm:h-80 overflow-hidden">
           <img
-            src={`https://source.unsplash.com/1600x900/?${encodeURIComponent(destination || "travel")},india,landscape`}
+            src={`https://picsum.photos/seed/${encodeURIComponent(destination || "travel")}/1600/900`}
             alt={`${destination} landscape`}
             className="w-full h-full object-cover"
             loading="eager"
-            onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
+            onError={(e) => { (e.target as HTMLImageElement).src = "https://picsum.photos/seed/travel/1600/900"; }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 lg:px-8 pb-8">
@@ -173,11 +173,11 @@ const FreeItinerary = () => {
                   {/* Place image */}
                   <div className="h-36 sm:h-44 overflow-hidden">
                     <img
-                      src={`https://source.unsplash.com/800x400/?${encodeURIComponent(place.name + " " + (destination || "india"))}`}
+                      src={`https://picsum.photos/seed/${encodeURIComponent(place.name + "-" + (destination || "india"))}/800/400`}
                       alt={place.name}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                       loading="lazy"
-                      onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${i + 20}/800/400`; }}
                     />
                   </div>
                   <div className="p-6 sm:p-8">
