@@ -1,11 +1,13 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, Compass, Clock, Wallet, Star, CheckCircle2, Map, Zap, Shield,
-  Globe, Mountain, Waves, TreePine, Landmark, ChevronRight
+  Globe, Mountain, Waves, TreePine, Landmark, ChevronRight, Megaphone, X
 } from "lucide-react";
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const features = [
   { icon: Compass, title: "AI-Powered Planning", desc: "Realistic itineraries that feel like a local friend planned your trip — not a brochure." },
@@ -32,14 +34,25 @@ const destinations = [
   { name: "Rajasthan", tag: "Desert Heritage", Icon: Landmark, seed: "rajasthan-palace-desert" },
 ];
 
-const stats = [
-  { value: "50K+", label: "Trips Planned" },
-  { value: "4.9", label: "User Rating" },
-  { value: "60s", label: "Avg. Generation" },
-  { value: "Free", label: "To Start" },
-];
-
 const Index = () => {
+  const { settings: hs } = useSiteSettings("home");
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  // DB-driven values with fallbacks
+  const heroHeadline = hs.hero_headline || "Plan trips that feel real.";
+  const heroSubheadline = hs.hero_subheadline || "Within budget, without stress. AI-powered itineraries written like a local planned your trip.";
+  const ctaPrimary = hs.cta_primary_text || "Plan My Trip";
+  const ctaSecondary = hs.cta_secondary_text || "Explore Destinations";
+  const announcementBannerActive = hs.announcement_banner_active === true || hs.announcement_banner_active === "true";
+  const announcementBannerText = hs.announcement_banner || "";
+
+  const stats = [
+    { value: hs.stats_trips || "50K+", label: "Trips Planned" },
+    { value: hs.stats_rating || "4.9", label: "User Rating" },
+    { value: hs.stats_generation_time || "60s", label: "Avg. Generation" },
+    { value: "Free", label: "To Start" },
+  ];
+
   return (
     <div className="min-h-screen relative overflow-x-hidden">
       {/* Global ambient orbs */}
@@ -54,6 +67,32 @@ const Index = () => {
       </div>
 
       <Navbar />
+
+      {/* ── Announcement Banner ── */}
+      <AnimatePresence>
+        {announcementBannerActive && announcementBannerText && !bannerDismissed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="relative z-20 overflow-hidden"
+            style={{ background: "linear-gradient(90deg, hsl(158, 42%, 36%), hsl(162, 45%, 28%))" }}
+          >
+            <div className="flex items-center justify-center gap-3 px-4 py-2.5 text-white text-sm font-medium">
+              <Megaphone className="w-4 h-4 flex-shrink-0 opacity-80" />
+              <span>{announcementBannerText}</span>
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="ml-2 opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
+                aria-label="Dismiss banner"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Hero ── */}
       <section className="relative min-h-screen flex items-center justify-center px-4 pt-24 pb-16 z-10">
@@ -80,13 +119,12 @@ const Index = () => {
             className="text-4xl sm:text-6xl lg:text-8xl font-heading leading-[1.05] mb-6 tracking-tight"
             style={{ color: "hsl(158, 45%, 10%)" }}
           >
-            Plan trips that{" "}
             <motion.span
               className="text-mint-gradient italic inline-block"
               animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
               transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             >
-              feel real.
+              {heroHeadline}
             </motion.span>
           </motion.h1>
 
@@ -98,7 +136,7 @@ const Index = () => {
             className="text-base sm:text-xl max-w-xl mx-auto mb-10 leading-relaxed font-light px-4"
             style={{ color: "hsl(158, 20%, 44%)" }}
           >
-            Within budget, without stress. AI-powered itineraries written like a local planned your trip.
+            {heroSubheadline}
           </motion.p>
 
           {/* CTAs */}
@@ -110,14 +148,14 @@ const Index = () => {
           >
             <Link to="/plan" className="w-full sm:w-auto">
               <button className="btn-primary text-sm sm:text-base w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-2 group animate-glow-ring">
-                Plan My Trip
+                {ctaPrimary}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
             <Link to="/destinations" className="w-full sm:w-auto">
               <button className="btn-ghost-glass text-sm sm:text-base w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-2">
                 <Globe className="w-4 h-4" />
-                Explore Destinations
+                {ctaSecondary}
               </button>
             </Link>
           </motion.div>
