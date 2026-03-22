@@ -5,12 +5,15 @@ import {
   MapPin, Calendar, Wallet, Eye, Trash2, RotateCcw, Bell, Loader2,
   LogOut, Settings, Star, Crown, Camera, Image, Compass, ArrowRight,
   TrendingUp, Clock, Shield, Zap, Users, ChevronRight, Download,
-  Globe, Film, MessageCircle, Heart, Sparkles, ExternalLink, Check, X
+  Globe, Film, MessageCircle, Heart, Sparkles, ExternalLink, Check, X,
+  Trophy, Target, Gift, BookOpen, Mail
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import TravelStreaks from "@/components/TravelStreaks";
+import ReferralRewards from "@/components/ReferralRewards";
 
 // ── Gamification title engine ──────────────────────────────────────────────
 const TITLES: { label: string; emoji: string; minTrips: number; persona?: string }[] = [
@@ -314,14 +317,17 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className={`grid gap-3 mb-6 ${isAdmin ? "grid-cols-4 sm:grid-cols-7" : "grid-cols-3 sm:grid-cols-6"}`}
+          className={`grid gap-3 mb-6 grid-cols-3 sm:grid-cols-5 lg:grid-cols-${isAdmin ? "10" : "9"}`}
         >
           {[
             { icon: Compass, label: "Plan Trip", link: "/plan", primary: true },
             { icon: MapPin, label: "My Trips", link: "/my-trips" },
             { icon: Film, label: "Studio", link: "/creator-studio" },
             { icon: Globe, label: "Travel Map", link: "/travel-map" },
-            { icon: Image, label: "Gallery", link: trips[0] ? `/trip-gallery/${trips[0].id}` : "/my-trips" },
+            { icon: Trophy, label: "Leaderboard", link: "/leaderboard" },
+            { icon: Target, label: "Bingo", link: "/travel-bingo" },
+            { icon: BookOpen, label: "Yearbook", link: "/travel-yearbook" },
+            { icon: Mail, label: "Postcard", link: "/postcard" },
             { icon: Star, label: "Offers", link: "/offers" },
             ...(isAdmin ? [{ icon: Shield, label: "Admin Panel", link: "/admin", primary: false, admin: true }] : []),
           ].map(({ icon: Icon, label, link, primary, ...rest }) => (
@@ -353,6 +359,15 @@ const Dashboard = () => {
             </button>
           </Link>
         </motion.div>
+
+        {/* ── Streaks & Referrals ── */}
+        {user && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.23 }}
+            className="grid sm:grid-cols-2 gap-4 mb-6">
+            <TravelStreaks userId={user.id} trips={trips} />
+            <ReferralRewards userId={user.id} />
+          </motion.div>
+        )}
 
         {/* ── Anniversary reminders ── */}
         {trips.some(t => t.preferences?.departureDate) && (
