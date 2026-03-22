@@ -30,6 +30,11 @@ import TripWrapped from "./pages/TripWrapped";
 import CreatorStudio from "./pages/CreatorStudio";
 import TravelMap from "./pages/TravelMap";
 import PackingChecklist from "./pages/PackingChecklist";
+import PostcardGenerator from "./pages/PostcardGenerator";
+import TripMontage from "./pages/TripMontage";
+import TravelYearbook from "./pages/TravelYearbook";
+import Leaderboard from "./pages/Leaderboard";
+import TravelBingo from "./pages/TravelBingo";
 
 const queryClient = new QueryClient();
 
