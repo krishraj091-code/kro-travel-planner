@@ -35,6 +35,9 @@ import TripMontage from "./pages/TripMontage";
 import TravelYearbook from "./pages/TravelYearbook";
 import Leaderboard from "./pages/Leaderboard";
 import TravelBingo from "./pages/TravelBingo";
+import DuoTravel from "./pages/DuoTravel";
+import PassportStamps from "./pages/PassportStamps";
+import SpendTracker from "./pages/SpendTracker";
 
 const queryClient = new QueryClient();
 
