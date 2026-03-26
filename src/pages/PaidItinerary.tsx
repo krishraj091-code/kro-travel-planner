@@ -927,6 +927,10 @@ const PaidItinerary = () => {
           <CurrencyConverterWidget destination={preferences?.arrival || "India"} budget={preferences?.budget_max ? Number(preferences.budget_max) : undefined} />
           <TravelCompatibilityScore userId={userId || undefined} />
           <AutoTravelBlog destination={preferences?.arrival || "India"} days={it.days} preferences={preferences} tripSummary={it.trip_summary} />
+          <TripCostComparison destination={preferences?.arrival || "India"} totalCost={it.budget?.total ? parseInt(String(it.budget.total).replace(/[^\d]/g, "")) : 15000} />
+          <AISafetyAlerts destination={preferences?.arrival || "India"} />
+          <PredictiveTripPlanner />
+          {savedId && <TripRating tripId={savedId} destination={preferences?.arrival || "India"} />}
         </motion.section>
 
         {/* Destination Gallery */}

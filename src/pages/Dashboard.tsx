@@ -14,6 +14,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TravelStreaks from "@/components/TravelStreaks";
 import ReferralRewards from "@/components/ReferralRewards";
+import TripChallenges from "@/components/TripChallenges";
+import PredictiveTripPlanner from "@/components/PredictiveTripPlanner";
 
 // ── Gamification title engine ──────────────────────────────────────────────
 const TITLES: { label: string; emoji: string; minTrips: number; persona?: string }[] = [
