@@ -14,6 +14,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TravelStreaks from "@/components/TravelStreaks";
 import ReferralRewards from "@/components/ReferralRewards";
+import TripChallenges from "@/components/TripChallenges";
+import PredictiveTripPlanner from "@/components/PredictiveTripPlanner";
 
 // ── Gamification title engine ──────────────────────────────────────────────
 const TITLES: { label: string; emoji: string; minTrips: number; persona?: string }[] = [
@@ -328,6 +330,9 @@ const Dashboard = () => {
             { icon: Target, label: "Bingo", link: "/travel-bingo" },
             { icon: BookOpen, label: "Yearbook", link: "/travel-yearbook" },
             { icon: Mail, label: "Postcard", link: "/postcard" },
+            { icon: Users, label: "Duo Travel", link: "/duo-travel" },
+            { icon: Compass, label: "Passport", link: "/passport" },
+            { icon: Wallet, label: "Expenses", link: "/spend-tracker" },
             { icon: Star, label: "Offers", link: "/offers" },
             ...(isAdmin ? [{ icon: Shield, label: "Admin Panel", link: "/admin", primary: false, admin: true }] : []),
           ].map(({ icon: Icon, label, link, primary, ...rest }) => (
@@ -362,11 +367,18 @@ const Dashboard = () => {
 
         {/* ── Streaks & Referrals ── */}
         {user && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.23 }}
-            className="grid sm:grid-cols-2 gap-4 mb-6">
-            <TravelStreaks userId={user.id} trips={trips} />
-            <ReferralRewards userId={user.id} />
-          </motion.div>
+          <>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.23 }}
+              className="grid sm:grid-cols-2 gap-4 mb-6">
+              <TravelStreaks userId={user.id} trips={trips} />
+              <ReferralRewards userId={user.id} />
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
+              className="grid sm:grid-cols-2 gap-4 mb-6">
+              <TripChallenges />
+              <PredictiveTripPlanner />
+            </motion.div>
+          </>
         )}
 
         {/* ── Anniversary reminders ── */}

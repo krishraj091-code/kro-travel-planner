@@ -35,6 +35,9 @@ import TripMontage from "./pages/TripMontage";
 import TravelYearbook from "./pages/TravelYearbook";
 import Leaderboard from "./pages/Leaderboard";
 import TravelBingo from "./pages/TravelBingo";
+import DuoTravel from "./pages/DuoTravel";
+import PassportStamps from "./pages/PassportStamps";
+import SpendTracker from "./pages/SpendTracker";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +75,9 @@ const AnimatedRoutes = () => {
         <Route path="/travel-yearbook" element={<PageTransition><TravelYearbook /></PageTransition>} />
         <Route path="/leaderboard" element={<PageTransition><Leaderboard /></PageTransition>} />
         <Route path="/travel-bingo" element={<PageTransition><TravelBingo /></PageTransition>} />
+        <Route path="/duo-travel" element={<PageTransition><DuoTravel /></PageTransition>} />
+        <Route path="/passport" element={<PageTransition><PassportStamps /></PageTransition>} />
+        <Route path="/spend-tracker" element={<PageTransition><SpendTracker /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
