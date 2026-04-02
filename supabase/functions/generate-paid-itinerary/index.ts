@@ -485,6 +485,7 @@ Return a JSON array of 8-10 events:
           travel_tips: addonsData.travel_tips || [],
           packing_checklist: addonsData.packing_checklist || [],
           local_insights: addonsData.local_insights || [],
+          nearby_events: eventsData,
           budget_breakdown: budgetBreakdown,
           trip_summary: tripSummary,
           closing_note: `Your personalized ${context.totalDays}-day trip to ${preferences.arrival} is ready! 🎉 This itinerary was crafted with your exact preferences in mind. Have an amazing journey! ✨`,
