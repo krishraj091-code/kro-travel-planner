@@ -440,7 +440,8 @@ Return a JSON array of 8-10 events:
   "category": "Festival|Concert|Exhibition|Sports|Cultural|Food|Nightlife|Workshop|Market|Religious",
   "description": "One line description",
   "isBestForYou": true/false,
-  "bookingQuery": "search query for Google"
+  "bookingQuery": "search query for Google",
+  "why_this": [{"icon": "🎯", "text": "string - why it matches their travel style"}, {"icon": "📅", "text": "string - timing fit with trip dates"}, {"icon": "📍", "text": "string - location convenience"}]
 }]`
           );
           if (Array.isArray(eventsResult)) {
