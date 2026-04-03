@@ -20,6 +20,7 @@ interface LocalEvent {
   description: string;
   isBestForYou: boolean;
   bookingQuery: string;
+  why_this?: { icon: string; text: string }[];
 }
 
 const getCategoryEmoji = (cat: string) => {
