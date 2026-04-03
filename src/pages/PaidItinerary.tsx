@@ -1068,6 +1068,11 @@ const PaidItinerary = () => {
                       </span>
                     )}
                   </div>
+                  {r.why_this && r.why_this.length > 0 && (
+                    <div className="mt-2">
+                      <WhyThisTooltip reasons={r.why_this} alternative={r.alternative_hint} />
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
