@@ -269,7 +269,9 @@ Return JSON:
       "distance_hub": "string",
       "maps_url": "string - Google Maps search URL",
       "why_choose": "string",
-      "area": "string"
+      "area": "string",
+      "why_this": [{"icon": "💰", "text": "budget reason"}, {"icon": "📍", "text": "location reason"}, {"icon": "⭐", "text": "value reason"}],
+      "alternative_hint": "string or null"
     }
   ],
   "hotel_cluster_area": "string - the area/locality where all 3 are located",
