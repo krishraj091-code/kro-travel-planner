@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import WhyThisTooltip from "@/components/WhyThisTooltip";
 import { Calendar, ExternalLink, Sparkles, MapPin, Clock, Ticket, Star } from "lucide-react";
 
 interface EventsNearbyProps {
