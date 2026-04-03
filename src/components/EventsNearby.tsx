@@ -175,6 +175,12 @@ const EventCard = ({
       <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 flex-shrink-0" />{event.venue}</span>
     </div>
 
+    {event.why_this && event.why_this.length > 0 && (
+      <div className="mt-1">
+        <WhyThisTooltip reasons={event.why_this} />
+      </div>
+    )}
+
     <a href={getBookingUrl(event.bookingQuery)} target="_blank" rel="noopener noreferrer"
       className="self-start mt-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-primary bg-primary/8 hover:bg-primary/15 transition-colors flex items-center gap-1.5">
       Know More & Book
