@@ -370,7 +370,9 @@ Return JSON:
           "note": "string - 1 line note",
           "duration": "string",
           "cost": "string - ₹ amount or Free (must stay within ₹${actPerPersonPerDay}/person budget)",
-          "maps_url": "string - Google Maps search URL like https://www.google.com/maps/search/PlaceName+${encodeURIComponent(preferences.arrival)}"
+          "maps_url": "string - Google Maps search URL like https://www.google.com/maps/search/PlaceName+${encodeURIComponent(preferences.arrival)}",
+          "why_this": [{"icon": "📍", "text": "string - why this place fits the route/timing"}, {"icon": "💰", "text": "string - budget fit"}, {"icon": "🎯", "text": "string - relevance to ${userPersona} style"}],
+          "alternative_hint": "string - nearby cheaper/faster alternative or null"
         }
       ]
     }
