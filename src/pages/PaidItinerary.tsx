@@ -486,6 +486,11 @@ const DayCarousel = ({
                           </span>
                         )}
                       </div>
+                      {act.why_this && act.why_this.length > 0 && (
+                        <div className="mt-1.5">
+                          <WhyThisTooltip reasons={act.why_this} alternative={act.alternative_hint} />
+                        </div>
+                      )}
                     </div>
                   </div>
 
